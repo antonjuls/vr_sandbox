@@ -13,7 +13,13 @@ import {
 
 // Locomotion: left stick — move relative to gaze, right stick — turn.
 // Moving/rotating the dolly drives the whole player through the world; tracking applies on top.
-export function createLocomotion(renderer, dolly) {
+export function createLocomotion(renderer, dolly, opts = {}) {
+  // per-scene overrides (e.g. Moon gravity, 10x sprint); fall back to config defaults
+  const baseSpeed = opts.speed ?? SPEED;
+  const sprintMult = opts.sprintMultiplier ?? SPRINT_MULTIPLIER;
+  const jumpV = opts.jumpSpeed ?? JUMP_SPEED;
+  const grav = opts.gravity ?? GRAVITY;
+
   let snapReady = true;
   let vY = 0; // vertical velocity of the player rig (m/s), for jumping
   let aPrev = false; // previous A-button state (edge-detects the jump)
@@ -56,8 +62,8 @@ export function createLocomotion(renderer, dolly) {
         .addScaledVector(_rgt, ls.x);
       if (_move.lengthSq() > 0) {
         _move.normalize();
-        const speed = button(right, 5) ? SPEED * SPRINT_MULTIPLIER : SPEED; // right B = sprint
-        dolly.position.addScaledVector(_move, speed * dt);
+        const moveSpeed = button(right, 5) ? baseSpeed * sprintMult : baseSpeed; // right B = sprint
+        dolly.position.addScaledVector(_move, moveSpeed * dt);
       }
     }
 
@@ -80,10 +86,10 @@ export function createLocomotion(renderer, dolly) {
       vY = 0;
     } else {
       if (button(right, 4) && !aPrev && dolly.position.y <= 1e-4) {
-        vY = JUMP_SPEED; // jump only from the ground, on a fresh press
+        vY = jumpV; // jump only from the ground, on a fresh press
       }
       aPrev = button(right, 4);
-      vY -= GRAVITY * dt;
+      vY -= grav * dt;
       dolly.position.y += vY * dt;
       if (dolly.position.y < 0) {
         dolly.position.y = 0; // landed

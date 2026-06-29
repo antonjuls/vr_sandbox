@@ -26,6 +26,7 @@ WebXR playground for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, n
 - `src/sceneManager.js` — named-scene registry: lazy-build, cache, switch (moves the rig into the active scene). `createSceneManager(ctx, registry)`.
 - `src/scenes/cosmicSandbox.js` — scene 1: the grounded physics sandbox + cosmos + tools.
 - `src/scenes/fractalInfinity.js` — scene 2: a giant Menger-sponge fractal you warp through.
+- `src/scenes/megalithDawn.js` — scene 3: a planet at sunrise, Moon gravity, a field of giant geometric forms (megalophobia).
 - `src/main.js` — the shell: shared rig, controllers, scene manager, scene menu (left Y), render loop.
 - `PROJECT.md` — what the project is, its state, the roadmap.
 
@@ -43,6 +44,7 @@ WebXR playground for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, n
 - **Tool menu (`src/menu.js`).** Left **X** toggles a floating panel placed ahead of gaze (oriented by copying the camera quaternion so it faces you). The right-controller ray + trigger picks a tool — `main`'s `onSelectStart` calls `menu.tryClick` before `grab`. The chosen tool is what **left grip** does.
 - **Tools (`src/effects.js`).** Driven from the tool menu (not raw buttons): `toggleBlackHole` (pull/swirl/swallow via `physics.eachDynamic`/`remove`), `supernova` (radial blast), `spawnStar` (drifting mini-sun), `spawnShape`. One pooled `THREE.Points` drives all bursts; `effects.update(dt)` runs the field + particles before `physics.step`.
 - **Fractal Infinity (`src/scenes/fractalInfinity.js`).** A separate scene: a colossal Menger sponge (`InstancedMesh`, depth `FRACTAL_DEPTH`) with self-similar nested copies + a field of giant ones. Left grip warps you through it, left X morphs it (wireframe / hue / spin). No physics, no floor — pure fractal.
+- **Megalith Dawn (`src/scenes/megalithDawn.js`).** A separate scene: flat planet ground, a slow sunrise (a shadow-casting `DirectionalLight` that tracks the player), warm haze, and ~120 random geometric giants (standing + floating, tiny to colossal, dark silhouettes) for megalophobia. Uses `createLocomotion` with Moon gravity + 10x sprint; `renderer.shadowMap` is enabled globally for its long shadows.
 - **Hand tracking:** `XRHandModelFactory('spheres')` — joint primitives, no external assets. Enabled via `VRButton optionalFeatures`.
 
 ## Conventions
@@ -68,6 +70,8 @@ WebXR playground for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, n
 - Controls: left **Y** = scene menu (global, in `main`). Per scene — Cosmic Sandbox: left **X** tool menu, left **grip** tool, right trigger grab; Fractal: left **grip** warp, left **X** morph. Right hand always locomotion/jump/sprint. Hand tracking has no buttons, so menus/tools are controller-only.
 - Scenes are cached, not disposed, on switch — their state (spawned shapes, black hole, etc.) survives. The shared `dolly` lives in one scene at a time; the manager re-parents it.
 - Don't parent per-scene visuals to the shared `camera`/`dolly` — they'd leak across scenes. The cosmos warp streaks live in their scene and are synced to the camera pose each frame.
+- `renderer.shadowMap` is enabled globally (for Megalith Dawn). Other scenes set no `castShadow`, so they pay nothing. Megalith's shadow light + target track the player so the map covers where you are; far giants don't cast (silhouettes only) to save cost.
+- `createLocomotion(renderer, dolly, opts)` takes per-scene overrides (`gravity` / `jumpSpeed` / `speed` / `sprintMultiplier`); defaults come from `config.js`.
 
 ## Not done yet (see roadmap in PROJECT.md)
 Teleport arc, comfort vignette, spawning shapes with the grip button, haptics on grab/hover.

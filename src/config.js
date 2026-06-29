@@ -61,3 +61,12 @@ export const PARTICLES = 600; // pool size
 // ====== FRACTAL INFINITY scene ======
 export const FRACTAL_DEPTH = 3; // Menger sponge recursion depth (20^depth cubes; 3 → 8000)
 export const FRACTAL_SIZE = 140; // size of the central sponge
+
+// ====== MEGALITH DAWN scene ======
+export const MOON_GRAVITY = 2.4; // m/s², low gravity for floaty, long jumps
+export const MOON_JUMP = 4.6; // m/s, jump launch velocity
+export const MOON_SPEED = 3.0; // m/s, walking speed on the planet
+export const SPRINT_10X = 10; // B held → 10x movement
+export const GIANTS = 84; // scattered geometric giants (mixed sizes)
+export const TITANS = 14; // colossal far-horizon giants (megalophobia)
+export const FOREST = 28; // cluster of towering monoliths ("forest of giants")

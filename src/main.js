@@ -8,12 +8,14 @@ import { createMenu } from "./menu.js";
 import { createSceneManager } from "./sceneManager.js";
 import { createCosmicSandbox } from "./scenes/cosmicSandbox.js";
 import { createFractalInfinity } from "./scenes/fractalInfinity.js";
+import { createMegalithDawn } from "./scenes/megalithDawn.js";
 
 // Each scene is a separate, named world. The scene menu (left Y) switches between them;
 // scenes keep their state when you switch away. main owns the shared rig + render loop.
 const SCENES = [
   { id: "cosmic-sandbox", name: "Cosmic Sandbox", create: createCosmicSandbox },
   { id: "fractal-infinity", name: "Fractal Infinity", create: createFractalInfinity },
+  { id: "megalith-dawn", name: "Megalith Dawn", create: createMegalithDawn },
 ];
 
 let renderer, camera, dolly, clock, controls, controllers;
@@ -34,6 +36,8 @@ function init() {
   renderer.setPixelRatio(devicePixelRatio);
   renderer.setSize(innerWidth, innerHeight);
   renderer.xr.enabled = true;
+  renderer.shadowMap.enabled = true; // used by Megalith Dawn for long sunrise shadows
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   document.body.appendChild(renderer.domElement);
   document.body.appendChild(
     VRButton.createButton(renderer, { optionalFeatures: ["hand-tracking"] }),
