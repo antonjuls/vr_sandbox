@@ -13,6 +13,7 @@ import { createFractalAbyss } from "./scenes/fractalAbyss.js";
 import { createVortexStorm } from "./scenes/vortexStorm.js";
 import { createClockworkTitans } from "./scenes/clockworkTitans.js";
 import { createCrimsonVoid } from "./scenes/crimsonVoid.js";
+import { createHyperzoom } from "./scenes/hyperzoom.js";
 
 // Each scene is a separate, named world. The scene menu (left Y) switches between them;
 // scenes keep their state when you switch away. main owns the shared rig + render loop.
@@ -24,6 +25,7 @@ const SCENES = [
   { id: "vortex-storm", name: "Vortex Storm", create: createVortexStorm },
   { id: "clockwork-titans", name: "Clockwork Titans", create: createClockworkTitans },
   { id: "crimson-void", name: "Crimson Void", create: createCrimsonVoid },
+  { id: "hyperzoom", name: "Hyperzoom", create: createHyperzoom },
 ];
 
 let renderer, camera, dolly, clock, controls, controllers;

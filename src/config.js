@@ -80,3 +80,9 @@ export const ABYSS_SCALE = 0.26; // fractal scale within a cell
 
 // ====== CRIMSON VOID scene ======
 export const VOID_MONOLITHS = 52; // breathing dark giants in the red murk
+
+// ====== HYPERZOOM scene (raymarched infinite zoom) ======
+export const HYPERZOOM_REP = 9; // domain-repetition cell size
+export const HYPERZOOM_SCALE = 0.28; // fractal scale within a cell
+export const HYPERZOOM_RATE = 0.12; // base zoom speed (always falling inward)
+export const HYPERZOOM_BOOST = 0.9; // extra zoom while warping (left grip)
