@@ -10,6 +10,8 @@ import {
   createObservation,
 } from "../cathedral/systems.js";
 import { createAudioscape } from "../cathedral/audioscape.js";
+import { createCollision } from "../cathedral/collision.js";
+import { createPortals } from "../cathedral/portals.js";
 import { ping } from "../audio.js";
 
 // Scene — "The Threshold Cathedral": a grounded liminal-horror promenade. You walk a single
@@ -33,6 +35,8 @@ export function createThresholdCathedral(ctx) {
     jumpSpeed: C.move.jump,
   });
   const audio = createAudioscape(renderer);
+  const collision = createCollision(H.colliders, C.collide);
+  const portals = createPortals(renderer, scene, camera, dolly, H.portals);
 
   // the view (head world pose) shared by all systems each frame
   const view = { pos: new THREE.Vector3(0, 1.6, H.startZ), dir: new THREE.Vector3(0, 0, -1) };
@@ -74,6 +78,13 @@ export function createThresholdCathedral(ctx) {
     if (renderer.xr.isPresenting) locomotion.update(dt, false);
     syncView();
 
+    // collision: push the rig so the head stays out of the walls
+    const c = collision.resolve(view.pos.x, view.pos.z);
+    dolly.position.x += c.x - view.pos.x;
+    dolly.position.z += c.z - view.pos.z;
+    view.pos.x = c.x;
+    view.pos.z = c.z;
+
     thresholds.update(view); // may fire a crossing event (fog/muffle/reshuffle/pulse)
     scene.fog.density = THREE.MathUtils.damp(scene.fog.density, fogTarget, C.fog.lerp, dt);
 
@@ -110,6 +121,9 @@ export function createThresholdCathedral(ctx) {
     fd.opened = THREE.MathUtils.damp(fd.opened, fd.openTarget, 2.0, dt);
     fd.left.position.x = fd.leftX0 - fd.opened * fd.crack;
     fd.right.position.x = fd.rightX0 + fd.opened * fd.crack;
+
+    // portals: render the live windows and teleport when you step through
+    portals.update();
   }
 
   // ----- interaction: the right-hand ray + trigger pushes on a door (it barely yields) -----

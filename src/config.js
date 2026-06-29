@@ -92,20 +92,24 @@ export const HYPERZOOM_BOOST = 0.9; // extra zoom while warping (left grip)
 // toward a colossal door. All the dread knobs live here. Distances are in metres along
 // -Z; the giant door sits at the far end and is faintly visible from the start.
 export const CATHEDRAL = {
-  // walking feel — heavy and slow; you are small here
-  move: { speed: 1.7, sprint: 1.9, gravity: 9.81, jump: 2.8 },
+  // walking feel — heavy, but B sprints properly fast
+  move: { speed: 1.9, sprint: 3.6, gravity: 9.81, jump: 2.8 },
+
+  // capsule collision against the architecture (a simple in-scene resolver, not cannon)
+  collide: { radius: 0.4, passes: 2 },
 
   // global murk. One FogExp2; its density eases toward the active zone's target.
+  // Lighter than the first pass so you can actually see the space.
   fog: {
-    color: 0x0a0c11,
+    color: 0x12161d,
     lerp: 0.35, // density easing per second
-    arrival: 0.0042,
-    corridor: 0.006,
-    stairwell: 0.0046,
-    balcony: 0.0016, // the void opens up — see far
-    archive: 0.0078, // closes in around you
-    doorField: 0.005,
-    cathedral: 0.0034,
+    arrival: 0.003,
+    corridor: 0.0042,
+    stairwell: 0.0034,
+    balcony: 0.0012, // the void opens up — see far
+    archive: 0.0052, // closes in around you
+    doorField: 0.0036,
+    cathedral: 0.0026,
   },
 
   // non-Euclidean distortion (never moves the camera — only far geometry / fog)
@@ -116,14 +120,24 @@ export const CATHEDRAL = {
     lerp: 0.6, // distortion easing per second
   },
 
-  // flickering industrial light
+  // flickering industrial light — base visibility comes from ambient + hemisphere
+  // (cheap), lamps add the cold accents and the flicker.
   light: {
-    cold: 0xbcd2e6, // fluorescent white-blue
-    emergency: 0xff2a18, // rare emergency red
-    lampIntensity: 14, // point-light intensity (range-limited)
-    flicker: 0.55, // 0..1 depth of the flicker
+    cold: 0xcfe0f0, // fluorescent white-blue
+    emergency: 0xff3020, // rare emergency red
+    ambient: 0x33404f, // base fill colour (lifts the darkest values)
+    ambientI: 0.9, // ambient intensity
+    hemi: 1.3, // hemisphere intensity
+    lampIntensity: 70, // point-light intensity
+    lampDistance: 150, // point-light range
+    lampDecay: 1.0, // gentle falloff so halls actually light up
+    flicker: 0.4, // 0..1 depth of the flicker (subtler so it stays readable)
     nearThreshold: 7, // metres: lamps stutter when you near a doorway
   },
+
+  // experimental portals: seamless teleport between two doorways + a live "window"
+  // that renders the destination onto the portal surface. roomAt is the hidden room.
+  portal: { window: true, rtSize: 768, renderRange: 55, fov: 95, roomAt: [3000, 0, 3000] },
 
   // the Infinite Corridor
   corridor: { length: 220, width: 15, height: 26, bays: 20 },

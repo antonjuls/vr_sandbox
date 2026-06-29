@@ -20,12 +20,12 @@ export function buildCathedral(scene) {
   const concrete = (color, roughness = 0.92) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.04 });
   const mats = {
-    pale: concrete(0x70757d),
-    mid: concrete(0x4c505a),
-    dark: concrete(0x2b2f36),
-    stain: concrete(0x35332f, 0.98),
-    metal: new THREE.MeshStandardMaterial({ color: 0x53565d, roughness: 0.5, metalness: 0.7 }),
-    glass: new THREE.MeshStandardMaterial({ color: 0x0c0f15, roughness: 0.14, metalness: 0.55 }), // wet black floor
+    pale: concrete(0x9aa0a8),
+    mid: concrete(0x6c7178),
+    dark: concrete(0x474b52),
+    stain: concrete(0x55524b, 0.98),
+    metal: new THREE.MeshStandardMaterial({ color: 0x6a6e76, roughness: 0.5, metalness: 0.7 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0x141923, roughness: 0.16, metalness: 0.5 }), // wet black floor
   };
   const pick = (a) => a[(Math.random() * a.length) | 0];
 
@@ -71,7 +71,19 @@ export function buildCathedral(scene) {
     corridorEnd: null, // retreats as you approach (ScaleDistortion)
     interactives: [], // ray-pickable doors (trigger nudges them open a crack)
     gates: [], // threshold z-lines with per-zone fog targets
+    colliders: [], // XZ AABBs for player collision
+    portals: [], // teleport doorways
   };
+
+  // collision AABBs (XZ). root has no transform, so a mesh's local pos == world pos.
+  const addCol = (m) =>
+    handles.colliders.push({
+      minX: m.position.x - Math.abs(m.scale.x) / 2,
+      maxX: m.position.x + Math.abs(m.scale.x) / 2,
+      minZ: m.position.z - Math.abs(m.scale.z) / 2,
+      maxZ: m.position.z + Math.abs(m.scale.z) / 2,
+    });
+  const addBox = (minX, maxX, minZ, maxZ) => handles.colliders.push({ minX, maxX, minZ, maxZ });
 
   // ===================== floor (segmented, with a void gap at the balcony) =====================
   // One continuous wet-glass floor, except a gap over the Observation Void where only a
@@ -94,8 +106,8 @@ export function buildCathedral(scene) {
   // ===================== Arrival Hall =====================
   // A vast empty hall: black-glass floor, walls lost in the dark, the giant lit door far away.
   (function arrivalHall() {
-    slab(mats.mid, -95, 35, Z.corrA / 2 + 15, 6, 70, 180); // far side walls (huge, dim)
-    slab(mats.mid, 95, 35, Z.corrA / 2 + 15, 6, 70, 180);
+    addCol(slab(mats.mid, -95, 35, Z.corrA / 2 + 15, 6, 70, 180)); // far side walls (huge, dim)
+    addCol(slab(mats.mid, 95, 35, Z.corrA / 2 + 15, 6, 70, 180));
     // a few monumental pilasters down each wall (instanced)
     const N = 12;
     const im = new THREE.InstancedMesh(BOX, mats.dark, N * 2);
@@ -122,8 +134,8 @@ export function buildCathedral(scene) {
     const g = new THREE.Group();
     root.add(g);
     // long walls + ceiling
-    slab(mats.pale, -w, h / 2, (Z.corrA + Z.corrB) / 2, 2, h, cl, g);
-    slab(mats.pale, w, h / 2, (Z.corrA + Z.corrB) / 2, 2, h, cl, g);
+    addCol(slab(mats.pale, -w, h / 2, (Z.corrA + Z.corrB) / 2, 2, h, cl, g));
+    addCol(slab(mats.pale, w, h / 2, (Z.corrA + Z.corrB) / 2, 2, h, cl, g));
     slab(mats.dark, 0, h, (Z.corrA + Z.corrB) / 2, w * 2, 2, cl, g); // ceiling
     // structural bays (instanced ribs) + doorways that grow with distance
     const bays = C.corridor.bays;
@@ -198,10 +210,14 @@ export function buildCathedral(scene) {
   // buildEntities) colossal shapes drifting through the dark.
   (function voidBalcony() {
     const z = Z.balcony;
-    // parapet around the lip (three sides; the bridge continues forward)
-    slab(mats.metal, 0, 1, z + 14, 60, 2, 1.4); // near rail
+    // parapet around the lip; the near rail is split to leave the bridge mouth (x in [-4,4])
+    slab(mats.metal, -17, 1, z + 14, 26, 2, 1.4);
+    slab(mats.metal, 17, 1, z + 14, 26, 2, 1.4);
     slab(mats.metal, -30, 1, z - 8, 1.4, 2, 44); // left rail
     slab(mats.metal, 30, 1, z - 8, 1.4, 2, 44); // right rail
+    // invisible walls flanking the bridge — the abyss has no floor, so you must cross it
+    addBox(3.7, 130, voidFar - 3, voidNear + 3);
+    addBox(-130, -3.7, voidFar - 3, voidNear + 3);
     // tiny lights drifting far below — like cities or stars
     const n = 260;
     const pos = new Float32Array(n * 3);
@@ -246,6 +262,7 @@ export function buildCathedral(scene) {
       im.instanceMatrix.needsUpdate = true;
       g.add(im);
       root.add(g);
+      addBox(gx - 18, gx + 18, gz - 4, gz + 4); // shelf wall is solid
       handles.breathing.push({ group: g, rate: 0.18 + Math.random() * 0.22, phase: Math.random() * 6, amp: 0.012 + Math.random() * 0.012 });
     }
     // a few colossal "books"/slabs too big to use, leaning in the aisle
@@ -362,14 +379,16 @@ export function buildCathedral(scene) {
   (function finalCathedral() {
     const z = Z.final;
     // nave walls + a high lintel framing the door
-    slab(mats.dark, -90, 90, z + 90, 8, 180, 220);
-    slab(mats.dark, 90, 90, z + 90, 8, 180, 220);
+    addCol(slab(mats.dark, -90, 90, z + 90, 8, 180, 220));
+    addCol(slab(mats.dark, 90, 90, z + 90, 8, 180, 220));
     slab(mats.dark, 0, 180, z + 90, 200, 8, 220); // roof, lost in the dark
     // the door: two leaves meeting at the centre line
     const H = 300;
     const W = 64;
     const left = slab(mats.mid, -W / 2 - 0.5, H / 2, z, W, H, 6);
     const right = slab(mats.mid, W / 2 + 0.5, H / 2, z, W, H, 6);
+    addBox(-W - 0.5, -0.2, z - 4, z + 4); // the door is impassable (only opens a crack)
+    addBox(0.2, W + 0.5, z - 4, z + 4);
     slab(mats.metal, 0, H + 8, z, W * 2 + 30, 16, 8); // vast lintel
     // a thin bright leak in the seam + glow
     const leak = glow(1.2, H * 0.96, 0xeaf2ff, 0.9);
@@ -383,32 +402,37 @@ export function buildCathedral(scene) {
 
   // ===================== lights + volumetric beams =====================
   (function lights() {
-    root.add(new THREE.HemisphereLight(0x2a3340, 0x05060a, 0.35)); // cold, low base
-    const addLamp = (x, y, z, color = C.light.cold, em = true) => {
-      const light = new THREE.PointLight(color, C.light.lampIntensity, 60, 1.6);
-      light.position.set(x, y, z);
-      root.add(light);
-      let tube = null;
+    // base visibility from ambient + hemisphere (cheap); lamps add cold accents + flicker
+    root.add(new THREE.HemisphereLight(0x60708a, 0x10131a, C.light.hemi));
+    root.add(new THREE.AmbientLight(C.light.ambient, C.light.ambientI));
+    // em = emissive tube + beam (flickers); real = an actual PointLight (costs per-fragment)
+    const addLamp = (x, y, z, color = C.light.cold, em = true, real = true) => {
+      let light = null;
+      if (real) {
+        light = new THREE.PointLight(color, C.light.lampIntensity, C.light.lampDistance, C.light.lampDecay);
+        light.position.set(x, y, z);
+        root.add(light);
+        handles.pointLights.push({ light, base: C.light.lampIntensity, color });
+      }
       if (em) {
-        tube = slab(new THREE.MeshStandardMaterial({ color: 0xf0f6ff, emissive: color, emissiveIntensity: 2.2 }), x, y + 1.5, z, 4, 0.25, 0.6);
-        handles.lamps.push({ mesh: tube, base: 2.2 });
-        // a faint volumetric beam under the tube
+        const tube = slab(new THREE.MeshStandardMaterial({ color: 0xf0f6ff, emissive: color, emissiveIntensity: 2.6 }), x, y + 1.5, z, 4, 0.25, 0.6);
+        handles.lamps.push({ mesh: tube, base: 2.6 });
         const beam = new THREE.Mesh(
-          new THREE.ConeGeometry(2.2, 10, 12, 1, true),
-          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }),
+          new THREE.ConeGeometry(2.4, 12, 12, 1, true),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.06, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }),
         );
-        beam.position.set(x, y - 3.5, z);
+        beam.position.set(x, y - 4.5, z);
         root.add(beam);
       }
-      handles.pointLights.push({ light, base: C.light.lampIntensity, color });
       return light;
     };
-    addLamp(0, 18, -20); // arrival
-    addLamp(0, C.corridor.height - 3, (Z.corrA + Z.corrB) / 2 + 30); // corridor near
-    addLamp(0, C.corridor.height - 3, (Z.corrA + Z.corrB) / 2 - 50); // corridor far
-    addLamp(0, 22, Z.archive - 30); // archive
-    // a single emergency red near the stairwell — rare and wrong
-    addLamp(18, 10, Z.stair, C.light.emergency, false).distance = 50;
+    addLamp(0, 20, -20); // arrival (real)
+    addLamp(0, C.corridor.height - 3, (Z.corrA + Z.corrB) / 2 + 40, C.light.cold, true, false); // corridor (tube only)
+    addLamp(0, C.corridor.height - 3, (Z.corrA + Z.corrB) / 2 - 40, C.light.cold, true, false);
+    addLamp(0, 22, Z.archive - 20, C.light.cold, true, false); // archive (tube only)
+    addLamp(0, 26, Z.door - 80); // door field (real)
+    addLamp(0, 70, Z.final + 110); // final cathedral (real, high — lights the giant door)
+    addLamp(18, 10, Z.stair, C.light.emergency, false).distance = 60; // emergency red (real)
   })();
 
   // ===================== hanging chains + suspended slabs =====================
@@ -460,6 +484,61 @@ export function buildCathedral(scene) {
       root.add(body);
       handles.entities.push({ mesh: body, mat, kind: "void", vx: (Math.random() < 0.5 ? 1 : -1) * E.drift, range: 1400 });
     }
+  })();
+
+  // ===================== experimental portals + the impossible room =====================
+  // A doorway in the Door Field linked to a doorway in a room built far away. Walking through
+  // teleports you seamlessly (the portals system renders the destination onto the surface).
+  (function portalsAndRoom() {
+    const makePortal = (px, pz, ry, hw, hh) => {
+      const g = new THREE.Group();
+      g.position.set(px, 2.6, pz);
+      g.rotation.y = ry;
+      slab(mats.metal, -hw - 0.3, 0, 0, 0.6, hh * 2 + 1.2, 0.8, g); // jambs
+      slab(mats.metal, hw + 0.3, 0, 0, 0.6, hh * 2 + 1.2, 0.8, g);
+      slab(mats.metal, 0, hh + 0.3, 0, hw * 2 + 1.2, 0.6, 0.8, g); // lintel
+      slab(mats.metal, 0, -hh - 0.3, 0, hw * 2 + 1.2, 0.6, 0.8, g); // sill
+      const quad = new THREE.Mesh(
+        new THREE.PlaneGeometry(hw * 2, hh * 2),
+        new THREE.MeshBasicMaterial({ color: 0x05070a, side: THREE.DoubleSide, fog: false }),
+      );
+      g.add(quad);
+      root.add(g);
+      return { group: g, hw, hh, quad, link: 0 };
+    };
+
+    // portal in the Door Field, off the centre line (so you choose it, not get funnelled
+    // through it), front (+Z) facing the approaching player
+    const dfz = Z.archive - 120;
+    const pField = makePortal(-7, dfz - 16, 0, 2, 2.6);
+
+    // the impossible room, built far away around its own portal (interior toward +Z)
+    const room = C.portal.roomAt;
+    const rx = room[0];
+    const rz = room[2];
+    const iz = rz + 8; // interior centre
+    const rw = 18;
+    const rh = 9;
+    const rd = 18;
+    const f = new THREE.Mesh(new THREE.PlaneGeometry(rw, rd), mats.glass);
+    f.rotation.x = -Math.PI / 2;
+    f.position.set(rx, 0.02, iz);
+    root.add(f);
+    addCol(slab(mats.pale, rx - rw / 2, rh / 2, iz, 0.6, rh, rd)); // left wall
+    addCol(slab(mats.pale, rx + rw / 2, rh / 2, iz, 0.6, rh, rd)); // right wall
+    addCol(slab(mats.pale, rx, rh / 2, iz + rd / 2, rw, rh, 0.6)); // far wall
+    addCol(slab(mats.pale, rx - 5.65, rh / 2, rz - 0.6, 6.7, rh, 0.6)); // near wall (portal gap)
+    addCol(slab(mats.pale, rx + 5.65, rh / 2, rz - 0.6, 6.7, rh, 0.6));
+    slab(mats.dark, rx, rh, iz, rw, 0.6, rd); // ceiling
+    slab(mats.mid, rx, 3.5, iz + 2, 7, 7, 7); // an impossibly oversized block filling the room
+    const rl = new THREE.PointLight(0xffe2bc, 50, 70, 1.0);
+    rl.position.set(rx, rh - 1, iz);
+    root.add(rl);
+
+    const pRoom = makePortal(rx, rz, 0, 2, 2.6);
+    pField.link = 1;
+    pRoom.link = 0;
+    handles.portals = [pField, pRoom];
   })();
 
   // ===================== threshold gates (fog targets per zone) =====================
