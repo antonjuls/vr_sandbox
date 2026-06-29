@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createFlight } from "../flight.js";
+import { createFlightControls } from "../flightControls.js";
 import { getPads, button } from "../input.js";
 import { FRACTAL_DEPTH, FRACTAL_SIZE } from "../config.js";
 
@@ -42,8 +42,7 @@ export function createFractalInfinity(ctx) {
     sponges.push({ mesh, spin: 0.01 });
   }
 
-  const flight = createFlight(renderer, dolly);
-  let gripPrev = false;
+  const controls = createFlightControls(renderer, dolly);
   let xPrev = false;
   let wire = false;
   let huePhase = 0;
@@ -60,17 +59,12 @@ export function createFractalInfinity(ctx) {
 
   function update(dt) {
     elapsed += dt;
-    let intensity = 0;
+    const intensity = controls.update(dt); // right stick turns, left stick flies, grip warps
     if (renderer.xr.isPresenting) {
       const { left } = getPads(renderer);
-      const grip = button(left, 1);
-      intensity = flight.update(dt, grip ? 1 : 0);
-      gripPrev = grip;
       const x = button(left, 4);
       if (x && !xPrev) morph();
       xPrev = x;
-    } else {
-      intensity = flight.update(dt, 0);
     }
 
     const boost = 1 + intensity * 4; // warping spins the fractal faster — extra trippy
@@ -85,7 +79,7 @@ export function createFractalInfinity(ctx) {
   function onActivate() {
     dolly.position.set(0, 0, FRACTAL_SIZE * 0.9);
     dolly.quaternion.identity();
-    flight.reset();
+    controls.reset();
   }
 
   return { name: "Fractal Infinity", scene, update, onActivate };

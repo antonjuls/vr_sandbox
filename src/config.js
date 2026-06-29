@@ -70,3 +70,10 @@ export const SPRINT_10X = 10; // B held → 10x movement
 export const GIANTS = 84; // scattered geometric giants (mixed sizes)
 export const TITANS = 14; // colossal far-horizon giants (megalophobia)
 export const FOREST = 28; // cluster of towering monoliths ("forest of giants")
+
+// ====== FLIGHT (shared by non-grounded scenes) ======
+export const FLY_SPEED = 8; // m/s, left-stick free-fly speed
+
+// ====== FRACTAL ABYSS scene (raymarched shader) ======
+export const ABYSS_REP = 10; // domain-repetition cell size (smaller = denser)
+export const ABYSS_SCALE = 0.26; // fractal scale within a cell

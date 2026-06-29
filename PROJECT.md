@@ -14,7 +14,7 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 - `src/config.js` · `src/scene.js` · `src/physics.js` · `src/controllers.js` · `src/grab.js` · `src/locomotion.js` · `src/cosmos.js` · `src/flight.js` · `src/menu.js` · `src/effects.js` · `src/input.js` · `src/sceneManager.js` · `src/scenes/*` · `src/main.js` — subsystems (see CLAUDE.md → "Files").
 
 ## Current state (working)
-- **Scenes (switch with left Y):** **Cosmic Sandbox**, **Fractal Infinity** and **Megalith Dawn**. Each keeps its state when you switch away.
+- **Scenes (switch with left Y):** **Cosmic Sandbox**, **Fractal Infinity**, **Megalith Dawn**, **Fractal Abyss**, **Vortex Storm**, **Clockwork Titans**. Each keeps its state when you switch away. Flight scenes share one movement scheme (right stick turn, left stick fly, grip warp).
 
 ### Cosmic Sandbox
 - Scene: 5 Platonic solids + a torus knot, a grid floor, landmark columns, stars, coloured lights.
@@ -34,6 +34,15 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 ### Megalith Dawn
 - An ordinary planet plain at sunrise: normal walking, Moon-like gravity (long floaty jumps), **B = 10x sprint**, a slow-rising sun with long shadows and warm haze.
 - The plain is strewn with random geometric forms — standing and floating, tiny to colossal — including a forest of towering monoliths and giants looming on the horizon (megalophobia).
+
+### Fractal Abyss
+- A genuinely infinite 3D fractal raymarched in a fragment shader (folded Sierpinski / KIFS, domain-repeated through space). Fly through it forever; it slowly morphs. The heaviest scene (per-pixel raymarch) — tunable.
+
+### Vortex Storm
+- Thousands of shards swirling around a glowing core in concentric, differentially-sheared rings; constant hue drift. Fly through the churn.
+
+### Clockwork Titans
+- Colossal nested rings and cog-wheels turning on their own axes like a gyroscopic orrery, in warm dramatic light — mechanical megalophobia.
 
 ## Key decisions
 - **The `dolly` rig**: camera, controllers and hands are children of one group; locomotion = transforming the group. Physical tracking lives "inside" the virtual movement.
@@ -70,3 +79,5 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 - Left Y opens the scene menu; selecting switches worlds and the previous scene keeps its state.
 - Fractal Infinity: left grip flies through the sponge; left X morphs it (wireframe / hue / spin).
 - Megalith Dawn: low-gravity long jumps; B sprints ~10x; the sun rises and shadows shift; giant forms loom (some colossal on the horizon).
+- Flight scenes (Fractal Infinity / Abyss / Vortex Storm / Clockwork Titans): right stick turns, left stick flies, left grip warps — identical across all of them.
+- Fractal Abyss renders an infinite raymarched fractal; Vortex Storm churns; Clockwork Titans turn.
