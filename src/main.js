@@ -12,6 +12,7 @@ import { createMegalithDawn } from "./scenes/megalithDawn.js";
 import { createFractalAbyss } from "./scenes/fractalAbyss.js";
 import { createVortexStorm } from "./scenes/vortexStorm.js";
 import { createClockworkTitans } from "./scenes/clockworkTitans.js";
+import { createCrimsonVoid } from "./scenes/crimsonVoid.js";
 
 // Each scene is a separate, named world. The scene menu (left Y) switches between them;
 // scenes keep their state when you switch away. main owns the shared rig + render loop.
@@ -22,6 +23,7 @@ const SCENES = [
   { id: "fractal-abyss", name: "Fractal Abyss", create: createFractalAbyss },
   { id: "vortex-storm", name: "Vortex Storm", create: createVortexStorm },
   { id: "clockwork-titans", name: "Clockwork Titans", create: createClockworkTitans },
+  { id: "crimson-void", name: "Crimson Void", create: createCrimsonVoid },
 ];
 
 let renderer, camera, dolly, clock, controls, controllers;

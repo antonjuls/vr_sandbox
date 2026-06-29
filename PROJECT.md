@@ -14,7 +14,7 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 - `src/config.js` · `src/scene.js` · `src/physics.js` · `src/controllers.js` · `src/grab.js` · `src/locomotion.js` · `src/cosmos.js` · `src/flight.js` · `src/menu.js` · `src/effects.js` · `src/input.js` · `src/sceneManager.js` · `src/scenes/*` · `src/main.js` — subsystems (see CLAUDE.md → "Files").
 
 ## Current state (working)
-- **Scenes (switch with left Y):** **Cosmic Sandbox**, **Fractal Infinity**, **Megalith Dawn**, **Fractal Abyss**, **Vortex Storm**, **Clockwork Titans**. Each keeps its state when you switch away. Flight scenes share one movement scheme (right stick turn, left stick fly, grip warp).
+- **Scenes (switch with left Y):** **Cosmic Sandbox**, **Fractal Infinity**, **Megalith Dawn**, **Fractal Abyss**, **Vortex Storm**, **Clockwork Titans**, **Crimson Void**. Each keeps its state when you switch away. Flight scenes share one movement scheme (right stick turn, left stick fly, grip warp).
 
 ### Cosmic Sandbox
 - Scene: 5 Platonic solids + a torus knot, a grid floor, landmark columns, stars, coloured lights.
@@ -43,6 +43,9 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 
 ### Clockwork Titans
 - Colossal nested rings and cog-wheels turning on their own axes like a gyroscopic orrery, in warm dramatic light — mechanical megalophobia.
+
+### Crimson Void
+- A blood-red murk where colossal dark monoliths loom out of the fog and slowly breathe (scale-pulse), a distant heart throbs in a double-thump rhythm that drives the light, and embers drift through the haze. Pure dread — fly through it.
 
 ## Key decisions
 - **The `dolly` rig**: camera, controllers and hands are children of one group; locomotion = transforming the group. Physical tracking lives "inside" the virtual movement.
@@ -81,3 +84,4 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 - Megalith Dawn: low-gravity long jumps; B sprints ~10x; the sun rises and shadows shift; giant forms loom (some colossal on the horizon).
 - Flight scenes (Fractal Infinity / Abyss / Vortex Storm / Clockwork Titans): right stick turns, left stick flies, left grip warps — identical across all of them.
 - Fractal Abyss renders an infinite raymarched fractal; Vortex Storm churns; Clockwork Titans turn.
+- Crimson Void: monoliths loom from red fog and breathe; the heart throbs and the light pulses with it.

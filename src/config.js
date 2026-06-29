@@ -77,3 +77,6 @@ export const FLY_SPEED = 8; // m/s, left-stick free-fly speed
 // ====== FRACTAL ABYSS scene (raymarched shader) ======
 export const ABYSS_REP = 10; // domain-repetition cell size (smaller = denser)
 export const ABYSS_SCALE = 0.26; // fractal scale within a cell
+
+// ====== CRIMSON VOID scene ======
+export const VOID_MONOLITHS = 52; // breathing dark giants in the red murk

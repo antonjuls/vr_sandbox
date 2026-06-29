@@ -30,6 +30,7 @@ WebXR playground for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, n
 - `src/scenes/fractalAbyss.js` — scene 4: a raymarched infinite fractal in a fragment shader (KIFS), flown through.
 - `src/scenes/vortexStorm.js` — scene 5: a swirling storm of instanced shards.
 - `src/scenes/clockworkTitans.js` — scene 6: colossal nested rotating rings and gears.
+- `src/scenes/crimsonVoid.js` — scene 7: a blood-red murk of breathing dark monoliths and a throbbing heart (horror).
 - `src/flightControls.js` — shared flight movement for non-grounded scenes (right-stick turn, left-stick fly, grip warp). `createFlightControls(renderer, dolly, opts)`.
 - `src/main.js` — the shell: shared rig, controllers, scene manager, scene menu (left Y), render loop.
 - `PROJECT.md` — what the project is, its state, the roadmap.
@@ -49,7 +50,7 @@ WebXR playground for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, n
 - **Tools (`src/effects.js`).** Driven from the tool menu (not raw buttons): `toggleBlackHole` (pull/swirl/swallow via `physics.eachDynamic`/`remove`), `supernova` (radial blast), `spawnStar` (drifting mini-sun), `spawnShape`. One pooled `THREE.Points` drives all bursts; `effects.update(dt)` runs the field + particles before `physics.step`.
 - **Fractal Infinity (`src/scenes/fractalInfinity.js`).** A separate scene: a colossal Menger sponge (`InstancedMesh`, depth `FRACTAL_DEPTH`) with self-similar nested copies + a field of giant ones. Left grip warps you through it, left X morphs it (wireframe / hue / spin). No physics, no floor — pure fractal.
 - **Megalith Dawn (`src/scenes/megalithDawn.js`).** A separate scene: flat planet ground, a slow sunrise (a shadow-casting `DirectionalLight` that tracks the player), warm haze, and ~120 random geometric giants (standing + floating, tiny to colossal, dark silhouettes) for megalophobia. Uses `createLocomotion` with Moon gravity + 10x sprint; `renderer.shadowMap` is enabled globally for its long shadows.
-- **Flight scenes** (Fractal Infinity / Abyss / Vortex Storm / Clockwork Titans) share `src/flightControls.js` for identical movement: right stick turns the view, left stick free-flies along gaze, left grip warps. **Fractal Abyss** is a fragment-shader raymarch (KIFS, domain-repeated) on a head-centred sphere driven by the built-in `cameraPosition` — the heaviest scene.
+- **Flight scenes** (Fractal Infinity / Abyss / Vortex Storm / Clockwork Titans / Crimson Void) share `src/flightControls.js` for identical movement: right stick turns the view, left stick free-flies along gaze, left grip warps. **Fractal Abyss** is a fragment-shader raymarch (KIFS, domain-repeated) on a head-centred sphere driven by the built-in `cameraPosition` — the heaviest scene.
 - **Hand tracking:** `XRHandModelFactory('spheres')` — joint primitives, no external assets. Enabled via `VRButton optionalFeatures`.
 
 ## Conventions
