@@ -27,6 +27,13 @@ export function setupControllers(renderer, dolly, onSelectStart, onSelectEnd) {
     controller.add(buildRay());
     controller.addEventListener("selectstart", onSelectStart);
     controller.addEventListener("selectend", onSelectEnd);
+    // remember which hand this is (left/right) — scenes route input by handedness
+    controller.addEventListener("connected", (e) => {
+      controller.userData.handedness = e.data && e.data.handedness;
+    });
+    controller.addEventListener("disconnected", () => {
+      controller.userData.handedness = null;
+    });
     dolly.add(controller);
     controllers.push(controller);
 

@@ -23,9 +23,9 @@ A grounded walking-horror promenade: you cross a single −Z axis through seven 
 
 - **Zones (near → far):** Arrival Hall (black-glass floor, the far door already glimmering) · Infinite Corridor (its far end recedes and swells as you approach) · Stairwell of Wrong Angles · Observation Void (a bridge over an abyss with colossal shapes drifting far below) · Breathing Archive (giant shelves that swell like lungs) · Door Field (a plain of freestanding doors at every scale, a few with uncanny interiors) · Final Cathedral (the colossal door, a heartbeat behind it).
 - **Systems** (`src/cathedral/*`), each fed the head pose each frame: threshold triggers (per-zone fog, muffle, distortion, door reshuffle on each crossing) · scale distortion · distant entities that vanish when stared at · non-Euclidean doors that move only while off-screen · environmental observation (flicker, swaying chains, creaking slabs, breathing). All of it moves geometry/fog/opacity only — **never the camera** (comfort).
-- **Move:** slow walking (left stick), right-stick turn, A step up, **B sprints fast**. A lightweight XZ collision resolver keeps you out of the walls and off the bridge; you can't fall into the void. The right-hand ray + trigger pushes on a door (the final one only ever yields a crack).
+- **Move:** you run by default (left stick), right-stick turn; **hold B to sprint near-warp (~100 km/h)**. A lightweight XZ collision resolver keeps you out of the walls and off the bridge; you can't fall into the void. **Left trigger** toggles a hand flashlight (bright, no falloff — it reaches the far giants). The right ray + trigger pushes on a door (the final one only ever yields a crack).
 - **Portals (experimental):** a Door Field doorway is linked to a doorway in a room built far away. Step through and the rig teleports seamlessly; the destination is rendered live onto the portal surface so you can see through first. Toggle the window render with `CATHEDRAL.portal.window`.
-- Built once by `buildCathedral(scene)` (instancing, shared concrete materials, ambient+hemisphere base light + a few point lights, no shadows) so it runs on a standalone headset. Every knob lives in the `CATHEDRAL` object in `config.js`.
+- **Light:** a soft ambient + a distant warm "evening sun" (lights the far giants) + cold flickering lamps. Built once by `buildCathedral(scene)` (instancing, shared concrete materials, no shadows) so it runs on a standalone headset. Every knob lives in the `CATHEDRAL` object in `config.js`.
 
 ### Archived scenes (reference only)
 Cosmic Sandbox · Fractal Infinity · Megalith Dawn · Fractal Abyss · Vortex Storm · Clockwork Titans · Crimson Void · Hyperzoom. Their files remain in `src/scenes/` (the flight scenes share `src/flightControls.js`); re-enable any by uncommenting its import + entries in `main.js`.
@@ -53,7 +53,8 @@ Cosmic Sandbox · Fractal Infinity · Megalith Dawn · Fractal Abyss · Vortex S
 ## Manual test checklist (on device)
 - Enter VR appears (means the secure context is OK).
 - You start in the Arrival Hall; the giant door glimmers far down the −Z axis.
-- Walk forward (left stick), turn both ways smoothly; A steps up, B hurries.
+- You run by default; turn both ways smoothly; hold B to sprint very fast (~100 km/h).
+- Left trigger toggles the hand flashlight; aim it at a far giant and it lights up in the beam.
 - The murk thickens/thins as you cross between zones, and the sound briefly muffles on each crossing.
 - The Infinite Corridor's far doorway recedes and grows as you approach it.
 - Distant silhouettes are faintly visible at the edges; look straight at one and it fades away.

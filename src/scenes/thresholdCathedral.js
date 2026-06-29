@@ -38,6 +38,40 @@ export function createThresholdCathedral(ctx) {
   const collision = createCollision(H.colliders, C.collide);
   const portals = createPortals(renderer, scene, camera, dolly, H.portals);
 
+  // hand flashlight — left trigger toggles it; it attaches to the left controller on first
+  // use and aims along the controller. decay 0 + no cutoff → it reaches the far giants.
+  const F = C.flashlight;
+  const flashGroup = new THREE.Group();
+  const spot = new THREE.SpotLight(F.color, F.intensity, 0, F.angle, F.penumbra, F.decay);
+  spot.visible = false;
+  const spotTarget = new THREE.Object3D();
+  spotTarget.position.set(0, 0, -1); // aim down the controller's forward (-Z)
+  flashGroup.add(spotTarget);
+  spot.target = spotTarget;
+  flashGroup.add(spot);
+  const torch = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.02, 0.03, 0.16, 10),
+    new THREE.MeshStandardMaterial({ color: 0x202227, emissive: 0x000000 }),
+  );
+  torch.rotation.x = Math.PI / 2;
+  flashGroup.add(torch);
+  const beam = new THREE.Mesh(
+    new THREE.ConeGeometry(0.6, 8, 16, 1, true),
+    new THREE.MeshBasicMaterial({ color: F.color, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }),
+  );
+  beam.rotation.x = -Math.PI / 2; // apex at the hand, widening forward
+  beam.position.set(0, 0, -4);
+  beam.visible = false;
+  flashGroup.add(beam);
+  let flashOn = false;
+  function toggleFlash(controller) {
+    if (flashGroup.parent !== controller) controller.add(flashGroup);
+    flashOn = !flashOn;
+    spot.visible = flashOn;
+    beam.visible = flashOn;
+    torch.material.emissive.setHex(flashOn ? 0x554422 : 0x000000);
+  }
+
   // the view (head world pose) shared by all systems each frame
   const view = { pos: new THREE.Vector3(0, 1.6, H.startZ), dir: new THREE.Vector3(0, 0, -1) };
   let fogTarget = C.fog.arrival;
@@ -129,6 +163,11 @@ export function createThresholdCathedral(ctx) {
   // ----- interaction: the right-hand ray + trigger pushes on a door (it barely yields) -----
   function onSelectStart(e) {
     const controller = e.target;
+    // left hand toggles the flashlight; right hand (or unknown) pushes on doors
+    if (controller.userData && controller.userData.handedness === "left") {
+      toggleFlash(controller);
+      return;
+    }
     _o.setFromMatrixPosition(controller.matrixWorld);
     _m.extractRotation(controller.matrixWorld);
     _d.set(0, 0, -1).applyMatrix4(_m).normalize();

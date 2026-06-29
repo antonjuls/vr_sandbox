@@ -29,8 +29,11 @@ export function createPortals(renderer, scene, camera, dolly, portals) {
 
   if (P.window) {
     for (const p of portals) {
-      p.rt = new THREE.WebGLRenderTarget(P.rtSize, P.rtSize);
-      p.vcam = new THREE.PerspectiveCamera(P.fov, 1, 0.1, 12000);
+      const aspect = p.hw / p.hh; // match the opening so the view isn't stretched
+      p.rt = new THREE.WebGLRenderTarget(Math.round(P.rtSize * aspect), P.rtSize);
+      p.rt.texture.minFilter = THREE.LinearFilter;
+      p.rt.texture.magFilter = THREE.LinearFilter;
+      p.vcam = new THREE.PerspectiveCamera(P.fov, aspect, 0.1, 12000);
       if (p.quad) {
         p.quad.material.dispose?.();
         p.quad.material = new THREE.MeshBasicMaterial({ map: p.rt.texture, toneMapped: false, fog: false, side: THREE.DoubleSide });

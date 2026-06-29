@@ -92,8 +92,8 @@ export const HYPERZOOM_BOOST = 0.9; // extra zoom while warping (left grip)
 // toward a colossal door. All the dread knobs live here. Distances are in metres along
 // -Z; the giant door sits at the far end and is faintly visible from the start.
 export const CATHEDRAL = {
-  // walking feel — heavy, but B sprints properly fast
-  move: { speed: 1.9, sprint: 3.6, gravity: 9.81, jump: 2.8 },
+  // movement — you run by default; B is near-warp (~100 km/h) to cross the vast halls
+  move: { speed: 4.8, sprint: 6.0, gravity: 9.81, jump: 2.8 }, // 4.8 * 6 ≈ 28.8 m/s ≈ 104 km/h
 
   // capsule collision against the architecture (a simple in-scene resolver, not cannon)
   collide: { radius: 0.4, passes: 2 },
@@ -120,14 +120,16 @@ export const CATHEDRAL = {
     lerp: 0.6, // distortion easing per second
   },
 
-  // flickering industrial light — base visibility comes from ambient + hemisphere
-  // (cheap), lamps add the cold accents and the flicker.
+  // light: a soft ambient + a distant warm "evening sun" (lights the far giants), plus
+  // cold fluorescent lamps for accents/flicker.
   light: {
     cold: 0xcfe0f0, // fluorescent white-blue
     emergency: 0xff3020, // rare emergency red
-    ambient: 0x33404f, // base fill colour (lifts the darkest values)
-    ambientI: 0.9, // ambient intensity
-    hemi: 1.3, // hemisphere intensity
+    ambient: 0x3a4452, // base fill colour (lifts the darkest values)
+    ambientI: 1.0, // ambient intensity
+    hemi: 1.45, // hemisphere intensity
+    sun: 0xffb070, // warm low sun, almost sunset
+    sunI: 1.4, // directional sun intensity (reaches the far giants)
     lampIntensity: 70, // point-light intensity
     lampDistance: 150, // point-light range
     lampDecay: 1.0, // gentle falloff so halls actually light up
@@ -135,9 +137,13 @@ export const CATHEDRAL = {
     nearThreshold: 7, // metres: lamps stutter when you near a doorway
   },
 
+  // hand flashlight (left trigger toggles it). decay 0 + no range cutoff → it reaches and
+  // lights even the most distant giants in its beam.
+  flashlight: { color: 0xfff4e2, intensity: 8, angle: 0.34, penumbra: 0.5, decay: 0 },
+
   // experimental portals: seamless teleport between two doorways + a live "window"
   // that renders the destination onto the portal surface. roomAt is the hidden room.
-  portal: { window: true, rtSize: 768, renderRange: 55, fov: 95, roomAt: [3000, 0, 3000] },
+  portal: { window: true, rtSize: 1280, renderRange: 70, fov: 75, roomAt: [3000, 0, 3000] },
 
   // the Infinite Corridor
   corridor: { length: 220, width: 15, height: 26, bays: 20 },

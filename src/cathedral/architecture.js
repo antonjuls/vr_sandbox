@@ -405,6 +405,20 @@ export function buildCathedral(scene) {
     // base visibility from ambient + hemisphere (cheap); lamps add cold accents + flicker
     root.add(new THREE.HemisphereLight(0x60708a, 0x10131a, C.light.hemi));
     root.add(new THREE.AmbientLight(C.light.ambient, C.light.ambientI));
+    // a distant warm "evening sun" — directional, so it reaches and shapes the far giants
+    const sun = new THREE.DirectionalLight(C.light.sun, C.light.sunI);
+    sun.position.set(-1800, 260, -500);
+    root.add(sun);
+    root.add(sun.target); // aims at origin
+    // a visible low sun orb (additive, fog-free) for the almost-sunset feel in open zones
+    const orb = new THREE.Group();
+    const orbGlow = (r, c, o) =>
+      orb.add(new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })));
+    orbGlow(140, 0xffd9a0, 0.9);
+    orbGlow(280, 0xffae5a, 0.4);
+    orbGlow(520, 0xff7a3a, 0.16);
+    orb.position.set(-6500, 360, -1800);
+    root.add(orb);
     // em = emissive tube + beam (flickers); real = an actual PointLight (costs per-fragment)
     const addLamp = (x, y, z, color = C.light.cold, em = true, real = true) => {
       let light = null;
@@ -466,7 +480,8 @@ export function buildCathedral(scene) {
       const a = Math.random() * Math.PI * 2;
       const r = E.distance + Math.random() * 500;
       g.position.set(Math.cos(a) * r, 0, Z.balcony + Math.sin(a) * r);
-      const mat = new THREE.MeshBasicMaterial({ color: 0x161b22, transparent: true, opacity: E.visible, fog: true });
+      // lit (MeshStandard) so the sun and the flashlight beam catch them at distance
+      const mat = new THREE.MeshStandardMaterial({ color: 0x2a2f38, roughness: 0.85, metalness: 0.12, transparent: true, opacity: E.visible, fog: true });
       const body = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), mat);
       body.scale.set(E.height * 0.4, E.height, E.height * 0.4);
       body.position.y = E.height * 0.5;
@@ -476,7 +491,7 @@ export function buildCathedral(scene) {
     }
     // void crossers — enormous shapes drifting through the abyss below the balcony
     for (let i = 0; i < E.voidCrossers; i++) {
-      const mat = new THREE.MeshBasicMaterial({ color: 0x0e1117, transparent: true, opacity: 0.6, fog: true });
+      const mat = new THREE.MeshStandardMaterial({ color: 0x1a1f26, roughness: 0.8, metalness: 0.15, transparent: true, opacity: 0.7, fog: true });
       const body = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), mat);
       const s = 220 + Math.random() * 380;
       body.scale.set(s, s * 1.6, s);
