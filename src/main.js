@@ -56,7 +56,7 @@ function init() {
   const resetRig = () => {
     dolly.position.set(0, 0, 0);
     dolly.quaternion.identity();
-    locomotion.resetSnap();
+    locomotion.reset();
   };
   renderer.xr.addEventListener("sessionstart", resetRig);
   renderer.xr.addEventListener("sessionend", resetRig);

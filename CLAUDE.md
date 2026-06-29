@@ -28,7 +28,7 @@ WebXR sandbox for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, no b
 - **Physics — cannon-es (`src/physics.js`).** Every mesh gets a body; the `mesh <-> body` link lives in the `links` array.
   Each frame `step(dt)` runs `world.step(FIXED_STEP, dt, MAX_SUBSTEPS)` and **copies the body transform into the mesh** (the body is the source of truth). Floor — `CANNON.Plane`, columns — static `CANNON.Cylinder`, shapes — `Sphere`/`Box` (box = `Box`, everything else = `Sphere` from the bounding sphere).
 - **Grab = kinematic body.** On grab, meshes are **NOT reparented** (there used to be `controller.attach`). On `selectstart` the shape's body becomes `KINEMATIC`, and every frame `grab.updateHeld` feeds the controller's world pose (`matrixWorld.decompose`) into `physics.updateHeld` — the body teleports onto the hand and gets the hand velocity (so it can push others). On `selectend` the body goes `DYNAMIC` again and receives the hand velocity → **throw** (capped by `MAX_THROW`). The same `select` events arrive from a hand pinch.
-- **Locomotion (`src/locomotion.js`).** Gamepads via `session.inputSources` by `handedness`. Left stick — move relative to gaze (horizontal). Right — turn (smooth by default, snap behind the `SMOOTH_TURN` flag), rotating around the world-space head position.
+- **Locomotion (`src/locomotion.js`).** Gamepads via `session.inputSources` by `handedness`. Left stick — move relative to gaze (horizontal). Right — turn (smooth by default, snap behind the `SMOOTH_TURN` flag), rotating around the world-space head position. Right **A** (`buttons[4]`) — jump (vertical velocity on the rig + gravity, ground-only). Right **B** (`buttons[5]`) — sprint (speed × `SPRINT_MULTIPLIER` while held).
 - **Hand tracking:** `XRHandModelFactory('spheres')` — joint primitives, no external assets. Enabled via `VRButton optionalFeatures`.
 
 ## Conventions
@@ -43,7 +43,8 @@ WebXR sandbox for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, no b
 - The Quest stick is `gamepad.axes[2],[3]`. Axes `[0],[1]` are often the touchpad/empty. `thumb()` falls back to 0/1.
 - Turn direction is inverted on some runtimes — flip the sign in the `turnAroundHead(...)` call.
 - For movement math use `renderer.xr.getCamera()` (the live world-space head pose, already accounting for `dolly`), **not** `camera`.
-- Don't touch `dolly.position.y` (no flying) — movement vectors are zeroed on Y.
+- `dolly.position.y` is moved only by the jump channel (right A + gravity); horizontal stick movement stays zeroed on Y.
+- Right-controller buttons (xr-standard mapping): A = `buttons[4]`, B = `buttons[5]` (trigger 0, grip 1, stick-press 3). Hand tracking has no gamepad → `button()` returns false, so jump/sprint just no-op.
 - **cannon-es: the cylinder runs along the Y axis** (like `CylinderGeometry`) — columns need no extra rotation. `CANNON.Plane` faces +Z, so the floor is rotated `-PI/2` around X.
 - **Changing a body's type needs `body.updateMassProperties()`** (DYNAMIC<->KINEMATIC), otherwise `invMass` isn't recomputed and the shape won't fall after a throw.
 - A held body is driven by teleport + velocity → it lags at most one frame of motion (imperceptible in VR).

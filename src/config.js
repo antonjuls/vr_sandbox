@@ -6,6 +6,8 @@ export const SMOOTH_TURN = true; // true → smooth turn, false → snap turn pe
 export const SNAP_ANGLE = Math.PI / 4; // 45° per click (snap mode)
 export const SMOOTH_SPEED = 2.2; // rad/s for smooth turn
 export const DEADZONE = 0.2; // stick dead zone
+export const SPRINT_MULTIPLIER = 2.2; // right B held → walking speed multiplier (sprint)
+export const JUMP_SPEED = 3.2; // m/s, initial upward velocity on jump (right A); reuses GRAVITY for the fall
 
 // ====== PHYSICS (cannon-es) ======
 export const GRAVITY = 9.81; // m/s², free-fall acceleration (Earth-like)

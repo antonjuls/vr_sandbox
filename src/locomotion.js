@@ -5,12 +5,17 @@ import {
   SNAP_ANGLE,
   SMOOTH_SPEED,
   DEADZONE,
+  SPRINT_MULTIPLIER,
+  JUMP_SPEED,
+  GRAVITY,
 } from "./config.js";
 
 // Locomotion: left stick — move relative to gaze, right stick — turn.
 // Moving/rotating the dolly drives the whole player through the world; tracking applies on top.
 export function createLocomotion(renderer, dolly) {
   let snapReady = true;
+  let vY = 0; // vertical velocity of the player rig (m/s), for jumping
+  let aPrev = false; // previous A-button state (edge-detects the jump)
 
   // reusable objects (no per-frame allocations)
   const _pivot = new THREE.Vector3();
@@ -43,6 +48,10 @@ export function createLocomotion(renderer, dolly) {
     return { x: 0, y: 0 };
   }
 
+  function button(gp, i) {
+    return !!(gp && gp.buttons && gp.buttons[i] && gp.buttons[i].pressed);
+  }
+
   // rotate the rig around the world-space head position
   function turnAroundHead(angle) {
     const xrCam = renderer.xr.getCamera();
@@ -72,7 +81,8 @@ export function createLocomotion(renderer, dolly) {
         .addScaledVector(_rgt, ls.x);
       if (_move.lengthSq() > 0) {
         _move.normalize();
-        dolly.position.addScaledVector(_move, SPEED * dt);
+        const speed = button(right, 5) ? SPEED * SPRINT_MULTIPLIER : SPEED; // right B = sprint
+        dolly.position.addScaledVector(_move, speed * dt);
       }
     }
 
@@ -88,11 +98,25 @@ export function createLocomotion(renderer, dolly) {
         snapReady = true;
       }
     }
+
+    // vertical channel: jump (right A) + gravity on the player rig
+    if (button(right, 4) && !aPrev && dolly.position.y <= 1e-4) {
+      vY = JUMP_SPEED; // jump only from the ground, on a fresh press
+    }
+    aPrev = button(right, 4);
+    vY -= GRAVITY * dt;
+    dolly.position.y += vY * dt;
+    if (dolly.position.y < 0) {
+      dolly.position.y = 0; // landed
+      vY = 0;
+    }
   }
 
-  function resetSnap() {
+  function reset() {
     snapReady = true;
+    vY = 0;
+    aPrev = false;
   }
 
-  return { update, resetSnap };
+  return { update, reset };
 }

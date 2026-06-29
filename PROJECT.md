@@ -17,7 +17,7 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 - Scene: 5 Platonic solids + a torus knot, a grid floor, landmark columns, stars, coloured lights.
 - **Physics (cannon-es):** shapes fall under gravity (9.81 m/s²), bounce, **collide with each other and with the columns**, settle and sleep. The box lies flat (Box collider), everything else uses a sphere collider.
 - **Grab and throw** with a ray — both controllers **and** hands (pinch). A held shape is a kinematic body that follows the hand and pushes others; releasing = a throw with the hand velocity.
-- Movement: left stick — move relative to gaze; right — turn (smooth by default, snap behind the `SMOOTH_TURN` flag).
+- Movement: left stick — move relative to gaze; right stick — turn (smooth by default, snap behind the `SMOOTH_TURN` flag). Right **A** — jump, right **B** — sprint (hold to move fast).
 - Hand tracking (sphere model), Quest controller models, pointer ray.
 - Desktop mode with OrbitControls for quick checks without a headset.
 
@@ -44,6 +44,7 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 ## Manual test checklist (on device)
 - Enter VR appears (means the secure context is OK).
 - Movement in all four directions, turning both ways without jerks/inversion.
+- Right A jumps from the ground and arcs back down; right B held sprints.
 - Grab/release with a controller; the same with hands after putting the controllers down.
 - Shapes fall and settle on the floor; the box lies flat, doesn't hover.
 - A thrown shape flies in an arc, **collides with other shapes and columns**, settles and doesn't jitter.
