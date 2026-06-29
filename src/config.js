@@ -86,3 +86,79 @@ export const HYPERZOOM_REP = 9; // domain-repetition cell size
 export const HYPERZOOM_SCALE = 0.28; // fractal scale within a cell
 export const HYPERZOOM_RATE = 0.12; // base zoom speed (always falling inward)
 export const HYPERZOOM_BOOST = 0.9; // extra zoom while warping (left grip)
+
+// ====== THE THRESHOLD CATHEDRAL scene ======
+// A grounded liminal-horror promenade: you walk a single axis through seven zones
+// toward a colossal door. All the dread knobs live here. Distances are in metres along
+// -Z; the giant door sits at the far end and is faintly visible from the start.
+export const CATHEDRAL = {
+  // walking feel — heavy and slow; you are small here
+  move: { speed: 1.7, sprint: 1.9, gravity: 9.81, jump: 2.8 },
+
+  // global murk. One FogExp2; its density eases toward the active zone's target.
+  fog: {
+    color: 0x0a0c11,
+    lerp: 0.35, // density easing per second
+    arrival: 0.0042,
+    corridor: 0.006,
+    stairwell: 0.0046,
+    balcony: 0.0016, // the void opens up — see far
+    archive: 0.0078, // closes in around you
+    doorField: 0.005,
+    cathedral: 0.0034,
+  },
+
+  // non-Euclidean distortion (never moves the camera — only far geometry / fog)
+  scale: {
+    recede: 26, // metres the corridor's far end retreats as you approach
+    recedeRate: 0.55, // how strongly approach drives the retreat
+    grow: 0.5, // extra scale the corridor end swells to (0.5 → up to 1.5x)
+    lerp: 0.6, // distortion easing per second
+  },
+
+  // flickering industrial light
+  light: {
+    cold: 0xbcd2e6, // fluorescent white-blue
+    emergency: 0xff2a18, // rare emergency red
+    lampIntensity: 14, // point-light intensity (range-limited)
+    flicker: 0.55, // 0..1 depth of the flicker
+    nearThreshold: 7, // metres: lamps stutter when you near a doorway
+  },
+
+  // the Infinite Corridor
+  corridor: { length: 220, width: 15, height: 26, bays: 20 },
+
+  // distant colossal silhouettes — barely there, gone when you look straight at them
+  entity: {
+    horizon: 2, // silhouettes on the far edge of perception
+    voidCrossers: 2, // enormous shapes drifting through the balcony void
+    distance: 1700,
+    height: 520,
+    visible: 0.45, // opacity when unobserved
+    stareDot: 0.99, // look closer than this (view·dir) → it fades out
+    fade: 1.8, // opacity ease per second
+    drift: 5, // m/s lateral drift
+  },
+
+  // threshold "events" when you cross from one zone to the next
+  threshold: { muffle: 0.28, muffleHold: 0.7, muffleRamp: 0.3 },
+
+  // the Door Field — thousands of freestanding doors at impossible scales
+  doorField: {
+    instanced: 260, // dressing doors (instanced, static)
+    spread: 900,
+    special: 6, // hand-built doors with uncanny interiors
+    nudge: 0.05, // radians a special door turns while you aren't looking
+  },
+
+  // the audioscape (LiminalAudioSystem). Main owns the sub-bass drone; this adds layers.
+  audio: {
+    buzz: { freq: 118, type: "sawtooth", voices: 2, detune: 3, cutoff: 1500, gain: 0.014, lfoRate: 8, lfoDepth: 0.05 },
+    wind: { gain: 0.06, cutoff: 200 }, // low wind in impossible interiors
+    dripEvery: [3, 12], // s — water from very high above
+    groanEvery: [10, 24], // s — distant metal / concrete
+    stepEvery: [7, 18], // s — footsteps that may not be yours
+    impactEvery: [26, 60], // s — very rare, very far, very deep
+    heartbeat: 1.15, // s — the slow pulse from behind the final door
+  },
+};

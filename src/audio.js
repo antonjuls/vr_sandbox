@@ -48,6 +48,21 @@ export function toggleMute() {
   return _muted;
 }
 
+// Briefly duck the master bus, then restore — the "muffle" of crossing a threshold.
+// Respects mute (never raises a muted bus). depth 0..1 of the original volume.
+export function duckMaster(depth = 0.3, hold = 0.7, ramp = 0.3) {
+  audioContext();
+  if (!_master) return;
+  const t = _ctx.currentTime;
+  const target = _muted ? 0 : _vol;
+  const low = _muted ? 0 : _vol * depth;
+  _master.gain.cancelScheduledValues(t);
+  _master.gain.setValueAtTime(_master.gain.value, t);
+  _master.gain.linearRampToValueAtTime(low, t + ramp);
+  _master.gain.linearRampToValueAtTime(low, t + ramp + hold);
+  _master.gain.linearRampToValueAtTime(target, t + ramp + hold + ramp);
+}
+
 // move the 3D listener to the head each frame (pos + forward + up)
 export function setListenerPose(px, py, pz, fx, fy, fz, ux, uy, uz) {
   const ctx = audioContext();

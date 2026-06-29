@@ -7,38 +7,49 @@ import { CAMERA_FAR } from "./config.js";
 import { setupControllers } from "./controllers.js";
 import { createMenu } from "./menu.js";
 import { createSceneManager } from "./sceneManager.js";
-import { createCosmicSandbox } from "./scenes/cosmicSandbox.js";
-import { createFractalInfinity } from "./scenes/fractalInfinity.js";
-import { createMegalithDawn } from "./scenes/megalithDawn.js";
-import { createFractalAbyss } from "./scenes/fractalAbyss.js";
-import { createVortexStorm } from "./scenes/vortexStorm.js";
-import { createClockworkTitans } from "./scenes/clockworkTitans.js";
-import { createCrimsonVoid } from "./scenes/crimsonVoid.js";
-import { createHyperzoom } from "./scenes/hyperzoom.js";
+import { createThresholdCathedral } from "./scenes/thresholdCathedral.js";
+
+// --- Archived scenes ---------------------------------------------------------------
+// Kept for reference / history. The scene files still live in src/scenes/ (and the
+// fractal/flight scenes in src/flightControls.js etc.). To bring one back, uncomment its
+// import here and its entries in SCENES + SCENE_AUDIO below.
+// import { createCosmicSandbox } from "./scenes/cosmicSandbox.js";
+// import { createFractalInfinity } from "./scenes/fractalInfinity.js";
+// import { createMegalithDawn } from "./scenes/megalithDawn.js";
+// import { createFractalAbyss } from "./scenes/fractalAbyss.js";
+// import { createVortexStorm } from "./scenes/vortexStorm.js";
+// import { createClockworkTitans } from "./scenes/clockworkTitans.js";
+// import { createCrimsonVoid } from "./scenes/crimsonVoid.js";
+// import { createHyperzoom } from "./scenes/hyperzoom.js";
+// -----------------------------------------------------------------------------------
 
 // Each scene is a separate, named world. The scene menu (left Y) switches between them;
 // scenes keep their state when you switch away. main owns the shared rig + render loop.
 const SCENES = [
-  { id: "cosmic-sandbox", name: "Cosmic Sandbox", create: createCosmicSandbox },
-  { id: "fractal-infinity", name: "Fractal Infinity", create: createFractalInfinity },
-  { id: "megalith-dawn", name: "Megalith Dawn", create: createMegalithDawn },
-  { id: "fractal-abyss", name: "Fractal Abyss", create: createFractalAbyss },
-  { id: "vortex-storm", name: "Vortex Storm", create: createVortexStorm },
-  { id: "clockwork-titans", name: "Clockwork Titans", create: createClockworkTitans },
-  { id: "crimson-void", name: "Crimson Void", create: createCrimsonVoid },
-  { id: "hyperzoom", name: "Hyperzoom", create: createHyperzoom },
+  { id: "threshold-cathedral", name: "The Threshold Cathedral", create: createThresholdCathedral },
+  // --- Archived scenes (uncomment to restore to the scene menu) ---
+  // { id: "cosmic-sandbox", name: "Cosmic Sandbox", create: createCosmicSandbox },
+  // { id: "fractal-infinity", name: "Fractal Infinity", create: createFractalInfinity },
+  // { id: "megalith-dawn", name: "Megalith Dawn", create: createMegalithDawn },
+  // { id: "fractal-abyss", name: "Fractal Abyss", create: createFractalAbyss },
+  // { id: "vortex-storm", name: "Vortex Storm", create: createVortexStorm },
+  // { id: "clockwork-titans", name: "Clockwork Titans", create: createClockworkTitans },
+  // { id: "crimson-void", name: "Crimson Void", create: createCrimsonVoid },
+  // { id: "hyperzoom", name: "Hyperzoom", create: createHyperzoom },
 ];
 
 // per-scene ambient drone (procedural low hum that sets each world's mood)
 const SCENE_AUDIO = {
-  "cosmic-sandbox": { freq: 110, type: "sine", cutoff: 1200, gain: 0.12 },
-  "fractal-infinity": { freq: 90, type: "triangle", cutoff: 1000, gain: 0.12 },
-  "megalith-dawn": { freq: 48, type: "sine", cutoff: 520, gain: 0.16 },
-  "fractal-abyss": { freq: 70, type: "sawtooth", cutoff: 700, gain: 0.11 },
-  "vortex-storm": { freq: 130, type: "triangle", cutoff: 1400, gain: 0.12 },
-  "clockwork-titans": { freq: 55, type: "sawtooth", cutoff: 600, gain: 0.14 },
-  "crimson-void": { freq: 38, type: "sine", cutoff: 420, gain: 0.18 },
-  hyperzoom: { freq: 100, type: "triangle", cutoff: 1500, gain: 0.12 },
+  "threshold-cathedral": { freq: 30, type: "sine", voices: 3, detune: 4, cutoff: 240, gain: 0.2, lfoRate: 0.03, lfoDepth: 0.5 },
+  // --- Archived scenes' drones ---
+  // "cosmic-sandbox": { freq: 110, type: "sine", cutoff: 1200, gain: 0.12 },
+  // "fractal-infinity": { freq: 90, type: "triangle", cutoff: 1000, gain: 0.12 },
+  // "megalith-dawn": { freq: 48, type: "sine", cutoff: 520, gain: 0.16 },
+  // "fractal-abyss": { freq: 70, type: "sawtooth", cutoff: 700, gain: 0.11 },
+  // "vortex-storm": { freq: 130, type: "triangle", cutoff: 1400, gain: 0.12 },
+  // "clockwork-titans": { freq: 55, type: "sawtooth", cutoff: 600, gain: 0.14 },
+  // "crimson-void": { freq: 38, type: "sine", cutoff: 420, gain: 0.18 },
+  // hyperzoom: { freq: 100, type: "triangle", cutoff: 1500, gain: 0.12 },
 };
 
 let renderer, camera, dolly, clock, controls, controllers;
@@ -102,7 +113,7 @@ function init() {
     items: manager.list().map((s) => ({ id: s.id, label: s.name })),
     onSelect: goToScene,
   });
-  goToScene("cosmic-sandbox");
+  goToScene("threshold-cathedral");
 
   // re-place the rig on VR enter/exit via the active scene's spawn
   const reactivate = () => {

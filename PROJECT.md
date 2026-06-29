@@ -1,7 +1,7 @@
 # PROJECT.md — VR Shapes
 
 ## What it is
-A VR playground for Meta Quest 3 built as a set of **selectable scene-experiments** (switch in-headset via the scene menu, left Y). Each scene is its own world with its own rules — a grounded physics sandbox inside a giant cosmos, a fly-through fractal, and more to come. The goal is a lightweight, instantly browser-openable space (no Unity / store / APK) and a base for wild VR experiments.
+A VR playground for Meta Quest 3 built as named scene-experiments (switchable in-headset via the scene menu, left Y). The **current focus is a single polished scene — "The Threshold Cathedral"**, a grounded liminal-horror experience; the earlier experiments (a cosmic physics sandbox, fly-through fractals, etc.) are **archived for reference**. The goal is a lightweight, instantly browser-openable space (no Unity / store / APK) and a base for wild VR experiments.
 
 ## Stack and principles
 - Three.js `0.160` (WebXR) + cannon-es `0.20.0` (physics), both via a CDN `importmap`.
@@ -14,43 +14,20 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 - `src/config.js` · `src/scene.js` · `src/physics.js` · `src/controllers.js` · `src/grab.js` · `src/locomotion.js` · `src/cosmos.js` · `src/flight.js` · `src/menu.js` · `src/effects.js` · `src/input.js` · `src/sceneManager.js` · `src/scenes/*` · `src/main.js` — subsystems (see CLAUDE.md → "Files").
 
 ## Current state (working)
-- **Scenes (switch with left Y):** **Cosmic Sandbox**, **Fractal Infinity**, **Megalith Dawn**, **Fractal Abyss**, **Vortex Storm**, **Clockwork Titans**, **Crimson Void**, **Hyperzoom**. Each keeps its state when you switch away. Flight scenes share one movement scheme (right stick turn, left stick fly, grip warp).
-- **Audio:** procedural Web Audio — per-scene ambient drone + **3D-positional** event sounds (Cosmic grab/impact chimes, Clockwork ticks + deep gong, Crimson heartbeat booms), plus Megalith wind and a Hyperzoom shimmer that glides with the zoom. Right stick-press mutes. Unlocks on VR entry / first tap.
+- **Active scene: The Threshold Cathedral** — a grounded liminal-horror promenade (see below). The earlier experiment scenes are **archived** (commented out in `main.js`, files kept for reference).
+- **Audio:** procedural Web Audio — a sub-bass drone + a LiminalAudioSystem of **3D-positional** dread (drips from far above, distant metal groans, footsteps that may not be yours, rare colossal impacts) and the final-door heartbeat. Right stick-press mutes; crossing a threshold briefly muffles. Unlocks on VR entry / first tap.
 - **Service worker** (network-first): new builds load on reload, no cache clearing.
 
-### Cosmic Sandbox
-- Scene: 5 Platonic solids + a torus knot, a grid floor, landmark columns, stars, coloured lights.
-- **Physics (cannon-es):** shapes fall under gravity (9.81 m/s²), bounce, **collide with each other and with the columns**, settle and sleep. The box lies flat (Box collider), everything else uses a sphere collider.
-- **Grab and throw** with a ray — both controllers **and** hands (pinch). A held shape is a kinematic body that follows the hand and pushes others; releasing = a throw with the hand velocity.
-- Movement: left stick — move relative to gaze; right stick — turn (smooth by default, snap behind the `SMOOTH_TURN` flag). Right **A** — jump, right **B** — sprint (hold to move fast).
-- **Cosmos:** a gigantic backdrop — colossal ringed gas giant, blazing sun, supermassive black hole with a vast accretion disk, a spiral galaxy and deep starfields — built for overwhelming scale.
-- **Warp flight:** the Warp tool flies you toward your gaze at high speed with hyperspace streaks; lift off the ground and cross space toward the giant bodies.
-- **Tool menu (left X):** a floating panel; point the right ray + trigger to pick the tool used by **left grip** — Warp, Black Hole, Supernova, Star Forge, Drop Shape. Pooled particle bursts throughout.
-- Hand tracking (sphere model), Quest controller models, pointer ray.
-- Desktop mode with OrbitControls for quick checks without a headset.
+### The Threshold Cathedral
+A grounded walking-horror promenade: you cross a single −Z axis through seven monumental concrete zones toward a door ~300 m tall that was not built for humans. The fear is architectural — scale, distance, silence, and a space that quietly rearranges when you look away. No monsters, no gore, no jumpscares.
 
-### Fractal Infinity
-- A colossal Menger sponge (`InstancedMesh`) with self-similar nested copies and a field of giant looming ones; deep stars; constant hue drift.
-- Left grip warps you through the tunnels; left X morphs it (wireframe / hue / spin). No physics, no floor.
+- **Zones (near → far):** Arrival Hall (black-glass floor, the far door already glimmering) · Infinite Corridor (its far end recedes and swells as you approach) · Stairwell of Wrong Angles · Observation Void (a bridge over an abyss with colossal shapes drifting far below) · Breathing Archive (giant shelves that swell like lungs) · Door Field (a plain of freestanding doors at every scale, a few with uncanny interiors) · Final Cathedral (the colossal door, a heartbeat behind it).
+- **Systems** (`src/cathedral/*`), each fed the head pose each frame: threshold triggers (per-zone fog, muffle, distortion, door reshuffle on each crossing) · scale distortion · distant entities that vanish when stared at · non-Euclidean doors that move only while off-screen · environmental observation (flicker, swaying chains, creaking slabs, breathing). All of it moves geometry/fog/opacity only — **never the camera** (comfort).
+- **Move:** slow, heavy walking (left stick), right-stick turn, A step up, B hurry. The right-hand ray + trigger pushes on a door (the final one only ever yields a crack). No collision — the void is visual; you can't fall.
+- Built once by `buildCathedral(scene)` (instancing, shared concrete materials, ≈5 flickering lights, no shadows) so it runs on a standalone headset. Every knob lives in the `CATHEDRAL` object in `config.js`.
 
-### Megalith Dawn
-- An ordinary planet plain at sunrise: normal walking, Moon-like gravity (long floaty jumps), **B = 10x sprint**, a slow-rising sun with long shadows and warm haze.
-- The plain is strewn with random geometric forms — standing and floating, tiny to colossal — including a forest of towering monoliths and giants looming on the horizon (megalophobia).
-
-### Fractal Abyss
-- A genuinely infinite 3D fractal raymarched in a fragment shader (folded Sierpinski / KIFS, domain-repeated through space). Fly through it forever; it slowly morphs. The heaviest scene (per-pixel raymarch) — tunable.
-
-### Vortex Storm
-- Thousands of shards swirling around a glowing core in concentric, differentially-sheared rings; constant hue drift. Fly through the churn.
-
-### Clockwork Titans
-- Colossal nested rings and cog-wheels turning on their own axes like a gyroscopic orrery, in warm dramatic light — mechanical megalophobia.
-
-### Crimson Void
-- A blood-red haze where colossal dark monoliths loom and slowly breathe (scale-pulse), a distant heart throbs in a double-thump rhythm that drives the light and a low boom, and embers drift through. Lit clearly (brighter than the first pass). Pure dread — fly through it.
-
-### Hyperzoom
-- A raymarched fractal that magnifies forever: space is scaled by a self-similar x2 zoom that loops seamlessly, so you keep falling inward into endless detail. Rainbow palette; warp (left grip) dives faster.
+### Archived scenes (reference only)
+Cosmic Sandbox · Fractal Infinity · Megalith Dawn · Fractal Abyss · Vortex Storm · Clockwork Titans · Crimson Void · Hyperzoom. Their files remain in `src/scenes/` (the flight scenes share `src/flightControls.js`); re-enable any by uncommenting its import + entries in `main.js`.
 
 ## Key decisions
 - **The `dolly` rig**: camera, controllers and hands are children of one group; locomotion = transforming the group. Physical tracking lives "inside" the virtual movement.
@@ -74,22 +51,16 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 
 ## Manual test checklist (on device)
 - Enter VR appears (means the secure context is OK).
-- Movement in all four directions, turning both ways without jerks/inversion.
-- Right A jumps from the ground and arcs back down; right B held sprints.
-- Grab/release with a controller; the same with hands after putting the controllers down.
-- Shapes fall and settle on the floor; the box lies flat, doesn't hover.
-- A thrown shape flies in an arc, **collides with other shapes and columns**, settles and doesn't jitter.
-- You can build a stack of several shapes.
-- Left X opens the tool menu; pointing the right ray + trigger selects a tool; left grip uses it.
-- Warp (grip) flies toward gaze; you can leave the ground and approach the giant planet / sun / black hole; releasing decelerates.
-- Supernova flings shapes; Star Forge spawns a drifting glowing star; Black Hole swirls shapes in and swallows them.
-- A released (placed) shape stays put when you move away.
-- Left Y opens the scene menu; selecting switches worlds and the previous scene keeps its state.
-- Fractal Infinity: left grip flies through the sponge; left X morphs it (wireframe / hue / spin).
-- Megalith Dawn: low-gravity long jumps; B sprints ~10x; the sun rises and shadows shift; giant forms loom (some colossal on the horizon).
-- Flight scenes (Fractal Infinity / Abyss / Vortex Storm / Clockwork Titans): right stick turns, left stick flies, left grip warps — identical across all of them.
-- Fractal Abyss renders an infinite raymarched fractal; Vortex Storm churns; Clockwork Titans turn.
-- Crimson Void: monoliths loom from red fog and breathe; the heart throbs and the light pulses with it.
-- Hyperzoom: the rainbow fractal magnifies endlessly (no visible jump on the loop); warp dives faster; right stick steers.
-- Audio: each scene hums; sounds are spatial (come from objects). Cosmic chimes on grab and on impacts; Crimson thumps with the heartbeat; Clockwork ticks + gongs; Megalith has wind; Hyperzoom shimmers with the zoom. Right stick-press mutes.
-- After a deploy, a reload picks up new scenes (service worker) — no cache clearing.
+- You start in the Arrival Hall; the giant door glimmers far down the −Z axis.
+- Walk forward (left stick), turn both ways smoothly; A steps up, B hurries.
+- The murk thickens/thins as you cross between zones, and the sound briefly muffles on each crossing.
+- The Infinite Corridor's far doorway recedes and grows as you approach it.
+- Distant silhouettes are faintly visible at the edges; look straight at one and it fades away.
+- Observation Void: a narrow bridge over an abyss; tiny lights and colossal shapes drift far below.
+- The Breathing Archive's shelves swell and contract slowly.
+- Door Field: doors you aren't looking at turn slightly / change; the special doors show uncanny interiors.
+- Final Cathedral: the door is ~300 m tall; a heartbeat (boom + light pulse) grows as you near it; the right trigger forces it open only a crack.
+- Lights flicker (worse near doorways); chains sway; suspended slabs creak overhead.
+- Audio is spatial — drips from above, groans and footsteps around you. Right stick-press mutes.
+- Left Y opens the scene menu (only The Threshold Cathedral is listed).
+- After a deploy, a reload picks up the new build (service worker) — no cache clearing.
