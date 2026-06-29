@@ -33,7 +33,9 @@ WebXR playground for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, n
 - `src/scenes/crimsonVoid.js` — scene 7: a blood-red murk of breathing dark monoliths and a throbbing heart (horror).
 - `src/scenes/hyperzoom.js` — scene 8: a raymarched fractal that magnifies forever (seamless x2 self-similar zoom), rainbow palette.
 - `src/flightControls.js` — shared flight movement for non-grounded scenes (right-stick turn, left-stick fly, grip warp). `createFlightControls(renderer, dolly, opts)`.
-- `src/main.js` — the shell: shared rig, controllers, scene manager, scene menu (left Y), render loop.
+- `src/main.js` — the shell: shared rig, controllers, scene manager, scene menu (left Y), per-scene ambient drone, render loop.
+- `src/audio.js` — procedural Web Audio: shared context, evolving drone, one-shot `ping`/`boom`. `createDrone` / `ping` / `boom` / `resumeAudio`.
+- `sw.js` — network-first service worker (repo root): new builds load on reload; cache is an offline fallback only.
 - `PROJECT.md` — what the project is, its state, the roadmap.
 
 ## Architecture
@@ -52,6 +54,8 @@ WebXR playground for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, n
 - **Fractal Infinity (`src/scenes/fractalInfinity.js`).** A separate scene: a colossal Menger sponge (`InstancedMesh`, depth `FRACTAL_DEPTH`) with self-similar nested copies + a field of giant ones. Left grip warps you through it, left X morphs it (wireframe / hue / spin). No physics, no floor — pure fractal.
 - **Megalith Dawn (`src/scenes/megalithDawn.js`).** A separate scene: flat planet ground, a slow sunrise (a shadow-casting `DirectionalLight` that tracks the player), warm haze, and ~120 random geometric giants (standing + floating, tiny to colossal, dark silhouettes) for megalophobia. Uses `createLocomotion` with Moon gravity + 10x sprint; `renderer.shadowMap` is enabled globally for its long shadows.
 - **Flight scenes** (Fractal Infinity / Abyss / Vortex Storm / Clockwork Titans / Crimson Void / Hyperzoom) share `src/flightControls.js` for identical movement: right stick turns the view, left stick free-flies along gaze, left grip warps. **Fractal Abyss** and **Hyperzoom** are fragment-shader raymarches (KIFS) on a head-centred sphere driven by the built-in `cameraPosition` — the heaviest scenes. Hyperzoom adds a seamless infinite zoom: space is scaled by `exp2(fract(uZoom))`, looping x2 (KIFS self-similarity), so it magnifies forever; warp accelerates it.
+- **Audio (`src/audio.js`).** One shared Web Audio context (suspended until a gesture; `resumeAudio()` on VR start / first pointer). `main` plays a per-scene ambient drone (`SCENE_AUDIO`, swapped on switch) via `createDrone`; scenes trigger one-shot `ping`/`boom` on events (Crimson heartbeat booms, Clockwork ticks, Cosmic tool chimes).
+- **Service worker (`sw.js`).** Network-first, registered from `index.html`: always fetch latest, cache as offline fallback → new scenes show up after a reload without clearing cache. The very first install still needs one reload to take control.
 - **Hand tracking:** `XRHandModelFactory('spheres')` — joint primitives, no external assets. Enabled via `VRButton optionalFeatures`.
 
 ## Conventions
@@ -80,6 +84,7 @@ WebXR playground for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, n
 - `renderer.shadowMap` is enabled globally (for Megalith Dawn). Other scenes set no `castShadow`, so they pay nothing. Megalith's shadow light + target track the player so the map covers where you are; far giants don't cast (silhouettes only) to save cost.
 - `createLocomotion(renderer, dolly, opts)` takes per-scene overrides (`gravity` / `jumpSpeed` / `speed` / `sprintMultiplier`); defaults come from `config.js`.
 - Fractal Abyss raymarches every pixel — the heaviest scene. If FPS drops, lower the raymarch/iteration loop counts in `fractalAbyss.js` (they must be GLSL literals) or raise `ABYSS_SCALE`. Do **not** declare `cameraPosition` in the shader — three injects it (and `modelMatrix`/`viewMatrix`/`projectionMatrix`).
+- Audio is suspended until a user gesture; `resumeAudio()` runs on `sessionstart` and the first `pointerdown`. Event sounds are gated on `renderer.xr.isPresenting`; drones play once unlocked. Oscillators are one-shot, so `createDrone` rebuilds its nodes on each `start()`.
 
 ## Not done yet (see roadmap in PROJECT.md)
 Teleport arc, comfort vignette, spawning shapes with the grip button, haptics on grab/hover.

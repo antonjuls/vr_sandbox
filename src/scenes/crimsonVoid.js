@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createFlightControls } from "../flightControls.js";
+import { boom } from "../audio.js";
 import { VOID_MONOLITHS } from "../config.js";
 
 // Scene — "Crimson Void": a blood-red murk where colossal dark monoliths loom out of the
@@ -8,15 +9,16 @@ import { VOID_MONOLITHS } from "../config.js";
 export function createCrimsonVoid(ctx) {
   const { renderer, dolly } = ctx;
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x120305);
-  scene.fog = new THREE.FogExp2(0x3a0408, 0.009); // thick crimson murk
+  scene.background = new THREE.Color(0x2a0810);
+  scene.fog = new THREE.FogExp2(0x5a1218, 0.0045); // crimson haze — lighter, see further
 
-  scene.add(new THREE.HemisphereLight(0x5a0a10, 0x050102, 0.35));
-  const pulseLight = new THREE.PointLight(0xff1020, 1.0, 1400, 1.1); // throbs with the heartbeat
-  pulseLight.position.set(0, 70, -260);
+  scene.add(new THREE.HemisphereLight(0x9a3038, 0x201010, 0.8));
+  scene.add(new THREE.AmbientLight(0x551820, 0.35));
+  const pulseLight = new THREE.PointLight(0xff2030, 2.2, 2000, 1.0); // throbs with the heartbeat
+  pulseLight.position.set(0, 80, -200);
   scene.add(pulseLight);
-  const fill = new THREE.DirectionalLight(0x40060a, 0.5);
-  fill.position.set(-200, 120, 220);
+  const fill = new THREE.DirectionalLight(0x7a2018, 0.9);
+  fill.position.set(-200, 160, 220);
   scene.add(fill);
 
   // distant throbbing "heart" — a red bloom that pierces the fog (glows are fog-free)
@@ -37,6 +39,9 @@ export function createCrimsonVoid(ctx) {
 
   const controls = createFlightControls(renderer, dolly, { flySpeed: 9 });
   let t = 0;
+  let lastC = 0;
+  let b1 = false;
+  let b2 = false;
 
   function update(dt) {
     controls.update(dt);
@@ -45,8 +50,26 @@ export function createCrimsonVoid(ctx) {
 
     // the heart throbs; the murk pulses red with it
     heart.scale.setScalar(1 + hb * 0.12);
-    heartCore.material.color.setHSL(0.99, 1.0, 0.16 + hb * 0.24);
-    pulseLight.intensity = 0.5 + hb * 3.4;
+    heartCore.material.color.setHSL(0.99, 1.0, 0.2 + hb * 0.26);
+    pulseLight.intensity = 1.6 + hb * 3.6;
+
+    // low boom synced to each thump of the double-beat
+    const c = (t % 1.1) / 1.1;
+    if (c < lastC) {
+      b1 = false;
+      b2 = false;
+    }
+    if (renderer.xr.isPresenting) {
+      if (!b1 && c > 0.1) {
+        b1 = true;
+        boom({ freq: 44, dur: 0.5, gain: 0.5 });
+      }
+      if (!b2 && c > 0.28) {
+        b2 = true;
+        boom({ freq: 52, dur: 0.42, gain: 0.4 });
+      }
+    }
+    lastC = c;
 
     // monoliths breathe, each at its own slow rate/phase
     for (const m of monos) {
@@ -99,14 +122,14 @@ function buildMonoliths(scene) {
     new THREE.DodecahedronGeometry(0.62),
     new THREE.TorusKnotGeometry(0.5, 0.18, 80, 12),
   ];
-  const mats = [0x140406, 0x1a0508, 0x0e0204, 0x220a0c].map(
+  const mats = [0x3a1418, 0x4a1a1e, 0x2e1014, 0x52201f].map(
     (c) =>
       new THREE.MeshStandardMaterial({
         color: c,
-        roughness: 0.92,
+        roughness: 0.9,
         metalness: 0.08,
-        emissive: 0x2a0006,
-        emissiveIntensity: 0.35,
+        emissive: 0x3a0a0a,
+        emissiveIntensity: 0.45,
       }),
   );
   const pick = (a) => a[(Math.random() * a.length) | 0];

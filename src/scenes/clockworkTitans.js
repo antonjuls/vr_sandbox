@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createFlightControls } from "../flightControls.js";
+import { ping } from "../audio.js";
 
 // Scene — "Clockwork Titans": colossal nested rings and cog-wheels of a vast machine,
 // each turning on its own axis like a gyroscopic orrery, with giant gears looming in a
@@ -65,10 +66,17 @@ export function createClockworkTitans(ctx) {
   parts.push({ obj: spire, ax: new THREE.Vector3(0, 1, 0), sp: 0.04 });
 
   const controls = createFlightControls(renderer, dolly, { flySpeed: 10 });
+  let tick = 1;
 
   function update(dt) {
     controls.update(dt);
     for (const p of parts) p.obj.rotateOnAxis(p.ax, p.sp * dt);
+    tick -= dt;
+    if (tick <= 0) {
+      tick = 0.5 + Math.random() * 0.9;
+      if (renderer.xr.isPresenting)
+        ping({ freq: 150 + Math.random() * 160, partials: [1, 2.76, 5.4], dur: 0.5, gain: 0.1 }); // metallic clank
+    }
   }
 
   function onActivate() {

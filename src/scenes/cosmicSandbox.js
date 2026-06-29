@@ -7,6 +7,7 @@ import { createCosmos } from "../cosmos.js";
 import { createFlight } from "../flight.js";
 import { createMenu } from "../menu.js";
 import { getPads, button } from "../input.js";
+import { ping, boom } from "../audio.js";
 
 // Scene 1 — "Cosmic Sandbox": the grounded physics playground (grab/throw shapes,
 // gravity, columns) inside a gigantic cosmos, with warp flight and a tool menu.
@@ -57,10 +58,19 @@ export function createCosmicSandbox(ctx) {
     const thrust = activeTool === "warp" && grip ? 1 : 0;
     cosmos.setWarp(flight.update(dt, thrust));
     if (gripJust && activeTool !== "warp") {
-      if (activeTool === "singularity") effects.toggleBlackHole();
-      else if (activeTool === "supernova") effects.supernova();
-      else if (activeTool === "starforge") effects.spawnStar();
-      else if (activeTool === "dropshape") effects.spawnShape();
+      if (activeTool === "singularity") {
+        effects.toggleBlackHole();
+        ping({ freq: 130, dur: 1.4, gain: 0.13 });
+      } else if (activeTool === "supernova") {
+        effects.supernova();
+        boom({ freq: 48, dur: 0.7, gain: 0.5 });
+      } else if (activeTool === "starforge") {
+        effects.spawnStar();
+        ping({ freq: 720, dur: 1.0, gain: 0.12 });
+      } else if (activeTool === "dropshape") {
+        effects.spawnShape();
+        ping({ freq: 520, partials: [1, 2, 3], dur: 0.4, gain: 0.1 });
+      }
     }
     gripPrev = grip;
 

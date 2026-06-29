@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { VRButton } from "three/addons/webxr/VRButton.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getPads, button } from "./input.js";
+import { createDrone, resumeAudio } from "./audio.js";
 import { CAMERA_FAR } from "./config.js";
 import { setupControllers } from "./controllers.js";
 import { createMenu } from "./menu.js";
@@ -28,9 +29,30 @@ const SCENES = [
   { id: "hyperzoom", name: "Hyperzoom", create: createHyperzoom },
 ];
 
+// per-scene ambient drone (procedural low hum that sets each world's mood)
+const SCENE_AUDIO = {
+  "cosmic-sandbox": { freq: 110, type: "sine", cutoff: 1200, gain: 0.12 },
+  "fractal-infinity": { freq: 90, type: "triangle", cutoff: 1000, gain: 0.12 },
+  "megalith-dawn": { freq: 48, type: "sine", cutoff: 520, gain: 0.16 },
+  "fractal-abyss": { freq: 70, type: "sawtooth", cutoff: 700, gain: 0.11 },
+  "vortex-storm": { freq: 130, type: "triangle", cutoff: 1400, gain: 0.12 },
+  "clockwork-titans": { freq: 55, type: "sawtooth", cutoff: 600, gain: 0.14 },
+  "crimson-void": { freq: 38, type: "sine", cutoff: 420, gain: 0.18 },
+  hyperzoom: { freq: 100, type: "triangle", cutoff: 1500, gain: 0.12 },
+};
+
 let renderer, camera, dolly, clock, controls, controllers;
 let manager, sceneMenu;
+let currentDrone = null;
 let yPrev = false;
+
+// switch scene and swap its ambient drone
+function goToScene(id) {
+  manager.switchTo(id);
+  if (currentDrone) currentDrone.stop();
+  currentDrone = createDrone(SCENE_AUDIO[id] || {});
+  currentDrone.start();
+}
 
 init();
 
@@ -73,16 +95,20 @@ function init() {
     renderer,
     title: "SELECT SCENE",
     items: manager.list().map((s) => ({ id: s.id, label: s.name })),
-    onSelect: (id) => manager.switchTo(id),
+    onSelect: goToScene,
   });
-  manager.switchTo("cosmic-sandbox");
+  goToScene("cosmic-sandbox");
 
   // re-place the rig on VR enter/exit via the active scene's spawn
   const reactivate = () => {
     if (manager.active && manager.active.onActivate) manager.active.onActivate();
   };
-  renderer.xr.addEventListener("sessionstart", reactivate);
+  renderer.xr.addEventListener("sessionstart", () => {
+    resumeAudio(); // VR entry is a user gesture → unlock audio
+    reactivate();
+  });
   renderer.xr.addEventListener("sessionend", reactivate);
+  addEventListener("pointerdown", resumeAudio, { once: true }); // unlock on desktop too
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 0.7, -0.8);

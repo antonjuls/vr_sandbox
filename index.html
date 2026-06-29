@@ -88,5 +88,10 @@
     </script>
 
     <script type="module" src="./src/main.js"></script>
+    <script>
+      // network-first service worker → new builds load immediately on reload
+      if ("serviceWorker" in navigator)
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+    </script>
   </body>
 </html>

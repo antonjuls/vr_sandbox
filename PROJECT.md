@@ -15,6 +15,8 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 
 ## Current state (working)
 - **Scenes (switch with left Y):** **Cosmic Sandbox**, **Fractal Infinity**, **Megalith Dawn**, **Fractal Abyss**, **Vortex Storm**, **Clockwork Titans**, **Crimson Void**, **Hyperzoom**. Each keeps its state when you switch away. Flight scenes share one movement scheme (right stick turn, left stick fly, grip warp).
+- **Audio:** procedural Web Audio — a per-scene ambient drone plus event sounds (Crimson heartbeat booms, Clockwork ticks, Cosmic tool chimes); unlocks on VR entry / first tap.
+- **Service worker** (network-first): new builds load on reload, no cache clearing.
 
 ### Cosmic Sandbox
 - Scene: 5 Platonic solids + a torus knot, a grid floor, landmark columns, stars, coloured lights.
@@ -45,7 +47,7 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 - Colossal nested rings and cog-wheels turning on their own axes like a gyroscopic orrery, in warm dramatic light — mechanical megalophobia.
 
 ### Crimson Void
-- A blood-red murk where colossal dark monoliths loom out of the fog and slowly breathe (scale-pulse), a distant heart throbs in a double-thump rhythm that drives the light, and embers drift through the haze. Pure dread — fly through it.
+- A blood-red haze where colossal dark monoliths loom and slowly breathe (scale-pulse), a distant heart throbs in a double-thump rhythm that drives the light and a low boom, and embers drift through. Lit clearly (brighter than the first pass). Pure dread — fly through it.
 
 ### Hyperzoom
 - A raymarched fractal that magnifies forever: space is scaled by a self-similar x2 zoom that loops seamlessly, so you keep falling inward into endless detail. Rainbow palette; warp (left grip) dives faster.
@@ -89,3 +91,5 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 - Fractal Abyss renders an infinite raymarched fractal; Vortex Storm churns; Clockwork Titans turn.
 - Crimson Void: monoliths loom from red fog and breathe; the heart throbs and the light pulses with it.
 - Hyperzoom: the rainbow fractal magnifies endlessly (no visible jump on the loop); warp dives faster; right stick steers.
+- Audio: each scene hums; Crimson Void thumps with the heartbeat, Clockwork ticks, Cosmic tools chime (after entering VR / a tap).
+- After a deploy, a reload picks up new scenes (service worker) — no cache clearing.
