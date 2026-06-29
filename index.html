@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>VR Shapes — Quest 3</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #05060a;
+        font-family: -apple-system, system-ui, sans-serif;
+        color: #cdd6f4;
+      }
+      #overlay {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 10;
+        background: rgba(10, 12, 20, 0.55);
+        border: 1px solid rgba(120, 140, 200, 0.25);
+        border-radius: 12px;
+        padding: 14px 16px;
+        max-width: 340px;
+        backdrop-filter: blur(8px);
+      }
+      #overlay h1 {
+        font-size: 15px;
+        margin: 0 0 6px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+      }
+      #overlay p {
+        font-size: 12.5px;
+        margin: 4px 0;
+        color: #a6adc8;
+        line-height: 1.45;
+      }
+      #overlay kbd {
+        background: rgba(120, 140, 200, 0.18);
+        border-radius: 5px;
+        padding: 1px 6px;
+        font-size: 11.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="overlay">
+      <h1>VR Shapes</h1>
+      <p>On Quest: open in the browser → <kbd>Enter VR</kbd>.</p>
+      <p>
+        <b>Left stick</b> — move (relative to gaze). <b>Right stick</b> — smooth
+        turn.
+      </p>
+      <p><b>Trigger / hand pinch</b> — grab a shape. Throw it and it flies.</p>
+      <p>Shapes fall, bounce and collide (Earth-like gravity).</p>
+      <p>Put the controllers down — hand tracking takes over.</p>
+    </div>
+
+    <!-- three.js and cannon-es are loaded as ES modules from CDN, no build step -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+          "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+        }
+      }
+    </script>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
