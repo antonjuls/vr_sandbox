@@ -1,7 +1,7 @@
 # PROJECT.md — VR Shapes
 
 ## What it is
-A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, bouncing, collisions) that you can grab, rearrange and throw, with free movement around the scene. The goal is a lightweight, instantly browser-openable playground (no Unity / store / APK) and a base for further VR experiments.
+A VR playground for Meta Quest 3 built as a set of **selectable scene-experiments** (switch in-headset via the scene menu, left Y). Each scene is its own world with its own rules — a grounded physics sandbox inside a giant cosmos, a fly-through fractal, and more to come. The goal is a lightweight, instantly browser-openable space (no Unity / store / APK) and a base for wild VR experiments.
 
 ## Stack and principles
 - Three.js `0.160` (WebXR) + cannon-es `0.20.0` (physics), both via a CDN `importmap`.
@@ -11,9 +11,12 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 ## Structure
 - `index.html` — markup + `importmap` + entry point.
 - `src/config.js` — all settings (movement, physics, simulation step).
-- `src/config.js` · `src/scene.js` · `src/physics.js` · `src/controllers.js` · `src/grab.js` · `src/locomotion.js` · `src/cosmos.js` · `src/flight.js` · `src/menu.js` · `src/effects.js` · `src/input.js` · `src/main.js` — subsystems (see CLAUDE.md → "Files").
+- `src/config.js` · `src/scene.js` · `src/physics.js` · `src/controllers.js` · `src/grab.js` · `src/locomotion.js` · `src/cosmos.js` · `src/flight.js` · `src/menu.js` · `src/effects.js` · `src/input.js` · `src/sceneManager.js` · `src/scenes/*` · `src/main.js` — subsystems (see CLAUDE.md → "Files").
 
 ## Current state (working)
+- **Scenes (switch with left Y):** **Cosmic Sandbox** and **Fractal Infinity**. Each keeps its state when you switch away.
+
+### Cosmic Sandbox
 - Scene: 5 Platonic solids + a torus knot, a grid floor, landmark columns, stars, coloured lights.
 - **Physics (cannon-es):** shapes fall under gravity (9.81 m/s²), bounce, **collide with each other and with the columns**, settle and sleep. The box lies flat (Box collider), everything else uses a sphere collider.
 - **Grab and throw** with a ray — both controllers **and** hands (pinch). A held shape is a kinematic body that follows the hand and pushes others; releasing = a throw with the hand velocity.
@@ -23,6 +26,10 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 - **Tool menu (left X):** a floating panel; point the right ray + trigger to pick the tool used by **left grip** — Warp, Black Hole, Supernova, Star Forge, Drop Shape. Pooled particle bursts throughout.
 - Hand tracking (sphere model), Quest controller models, pointer ray.
 - Desktop mode with OrbitControls for quick checks without a headset.
+
+### Fractal Infinity
+- A colossal Menger sponge (`InstancedMesh`) with self-similar nested copies and a field of giant looming ones; deep stars; constant hue drift.
+- Left grip warps you through the tunnels; left X morphs it (wireframe / hue / spin). No physics, no floor.
 
 ## Key decisions
 - **The `dolly` rig**: camera, controllers and hands are children of one group; locomotion = transforming the group. Physical tracking lives "inside" the virtual movement.
@@ -35,7 +42,7 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 1. **Comfort locomotion**: a comfort vignette at the edges during smooth movement (anti-nausea). Cheap, big impact on feel.
 2. **Teleport arc** on the left grip as an alternative to the stick.
 3. **Haptics** on grab/hover/impact (`gamepad.hapticActuators.pulse`).
-4. **More powers & tuning**: warp, black hole, supernova, star forge, drop shape are in (menu-selected) — next could be portals, time-slow, magnet hands, or grabbable planets; plus tuning the `config.js` knobs.
+4. **More scenes & powers**: scenes are now selectable (Cosmic Sandbox, Fractal Infinity) — next scene-experiments could be a raymarched Mandelbulb, particle galaxies, an ocean of cubes; plus more tools (portals, time-slow, magnet hands) and tuning `config.js`.
 5. **Physics polish**: tune mass/friction/restitution in `config.js`, an audio click on grab/impact, exact colliders (convex hulls instead of spheres).
 6. **Polish**: tune speeds, a skybox gradient.
 
@@ -56,3 +63,5 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 - Warp (grip) flies toward gaze; you can leave the ground and approach the giant planet / sun / black hole; releasing decelerates.
 - Supernova flings shapes; Star Forge spawns a drifting glowing star; Black Hole swirls shapes in and swallows them.
 - A released (placed) shape stays put when you move away.
+- Left Y opens the scene menu; selecting switches worlds and the previous scene keeps its state.
+- Fractal Infinity: left grip flies through the sponge; left X morphs it (wireframe / hue / spin).

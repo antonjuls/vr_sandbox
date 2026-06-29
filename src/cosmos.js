@@ -123,7 +123,7 @@ export function createCosmos(scene, camera) {
   );
   streaks.frustumCulled = false;
   streaks.visible = false;
-  camera.add(streaks); // follows the head
+  scene.add(streaks); // kept in this scene; we sync it to the head each frame
   let warp = 0;
 
   function setWarp(intensity) {
@@ -134,6 +134,10 @@ export function createCosmos(scene, camera) {
     giantBody.rotation.y += dt * 0.01;
     giantRing.rotation.z += dt * 0.005;
     smbhDisk.rotation.z += dt * 0.04;
+
+    // keep the streaks wrapped around the head (camera world pose, one frame behind is fine)
+    streaks.position.setFromMatrixPosition(camera.matrixWorld);
+    streaks.quaternion.setFromRotationMatrix(camera.matrixWorld);
 
     // hyperspace streaks: zoom past the viewer, length scales with warp speed
     if (warp > 0.02) {

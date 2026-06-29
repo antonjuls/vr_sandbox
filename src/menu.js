@@ -1,17 +1,16 @@
 import * as THREE from "three";
 
-// Floating VR tool menu. Left X toggles it; it appears in front of your gaze.
-// Point the right-controller ray at an item and pull the trigger to select it
-// (main routes the trigger here first via tryClick). The picked tool is what the grip uses.
-export function createMenu({ scene, renderer, items, active, onSelect }) {
+// Floating VR list menu, reusable for tools and for scene selection.
+// toggle(scene) attaches the panel to the given scene in front of the gaze;
+// point the right-controller ray at an item and pull the trigger (routed via tryClick).
+export function createMenu({ renderer, items, active, onSelect, title = "SELECT" }) {
   const group = new THREE.Group();
   group.visible = false;
-  scene.add(group);
 
   let open = false;
   let activeId = active || (items[0] && items[0].id);
 
-  const PANEL_W = 0.64;
+  const PANEL_W = 0.66;
   const BTN_H = 0.1;
   const GAP = 0.018;
   const TITLE_H = 0.08;
@@ -31,11 +30,11 @@ export function createMenu({ scene, renderer, items, active, onSelect }) {
   backdrop.position.z = -0.004;
   group.add(backdrop);
 
-  const title = makeLabel("SELECT TOOL", PANEL_W, TITLE_H);
-  title.position.set(0, top - TITLE_H / 2, 0.002);
-  group.add(title);
+  const titleMesh = makeLabel(title, PANEL_W, TITLE_H);
+  titleMesh.position.set(0, top - TITLE_H / 2, 0.002);
+  group.add(titleMesh);
 
-  const buttons = []; // bg planes carrying userData.id
+  const buttons = [];
   items.forEach((it, i) => {
     const y = top - TITLE_H - 0.04 - i * (BTN_H + GAP) - BTN_H / 2;
     const bg = new THREE.Mesh(
@@ -80,18 +79,27 @@ export function createMenu({ scene, renderer, items, active, onSelect }) {
     return hits.length ? hits[0].object : null;
   }
 
-  function toggle() {
-    open = !open;
-    group.visible = open;
+  function close() {
+    open = false;
+    group.visible = false;
+    if (group.parent) group.parent.remove(group);
+  }
+
+  function toggle(scene) {
     if (open) {
-      const cam = renderer.xr.getCamera();
-      _cp.setFromMatrixPosition(cam.matrixWorld);
-      _cq.setFromRotationMatrix(cam.matrixWorld);
-      _cf.set(0, 0, -1).applyQuaternion(_cq).normalize();
-      group.position.copy(_cp).addScaledVector(_cf, 1.4);
-      group.quaternion.copy(_cq); // face the viewer
-      paint(null);
+      close();
+      return;
     }
+    open = true;
+    scene.add(group);
+    const cam = renderer.xr.getCamera();
+    _cp.setFromMatrixPosition(cam.matrixWorld);
+    _cq.setFromRotationMatrix(cam.matrixWorld);
+    _cf.set(0, 0, -1).applyQuaternion(_cq).normalize();
+    group.position.copy(_cp).addScaledVector(_cf, 1.4);
+    group.quaternion.copy(_cq); // face the viewer
+    group.visible = true;
+    paint(null);
   }
 
   function update(controllers) {
@@ -112,14 +120,14 @@ export function createMenu({ scene, renderer, items, active, onSelect }) {
     const h = pick(controller);
     if (!h) return false;
     activeId = h.userData.id;
+    close();
     onSelect(activeId);
-    open = false;
-    group.visible = false;
     return true;
   }
 
   return {
     toggle,
+    close,
     update,
     tryClick,
     get open() {

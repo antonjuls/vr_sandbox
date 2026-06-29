@@ -57,3 +57,7 @@ export const SPAWN_SPEED = 3.5; // m/s, launch speed along gaze
 
 // Particle burst pool (swallows / novae / spawns).
 export const PARTICLES = 600; // pool size
+
+// ====== FRACTAL INFINITY scene ======
+export const FRACTAL_DEPTH = 3; // Menger sponge recursion depth (20^depth cubes; 3 → 8000)
+export const FRACTAL_SIZE = 140; // size of the central sponge
