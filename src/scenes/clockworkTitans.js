@@ -67,6 +67,7 @@ export function createClockworkTitans(ctx) {
 
   const controls = createFlightControls(renderer, dolly, { flySpeed: 10 });
   let tick = 1;
+  let gong = 4;
 
   function update(dt) {
     controls.update(dt);
@@ -75,7 +76,13 @@ export function createClockworkTitans(ctx) {
     if (tick <= 0) {
       tick = 0.5 + Math.random() * 0.9;
       if (renderer.xr.isPresenting)
-        ping({ freq: 150 + Math.random() * 160, partials: [1, 2.76, 5.4], dur: 0.5, gain: 0.1 }); // metallic clank
+        ping({ freq: 150 + Math.random() * 160, partials: [1, 2.76, 5.4], dur: 0.5, gain: 0.1, position: parts[(Math.random() * parts.length) | 0].obj.position }); // metallic clank
+    }
+    gong -= dt;
+    if (gong <= 0) {
+      gong = 6 + Math.random() * 6;
+      if (renderer.xr.isPresenting)
+        ping({ freq: 64, partials: [1, 2.76, 5.4, 8.1], dur: 3.2, gain: 0.18, position: parts[(Math.random() * parts.length) | 0].obj.position }); // deep gong
     }
   }
 

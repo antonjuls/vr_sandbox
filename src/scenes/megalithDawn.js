@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createLocomotion } from "../locomotion.js";
+import { createWind } from "../audio.js";
 import {
   MOON_GRAVITY,
   MOON_JUMP,
@@ -66,6 +67,7 @@ export function createMegalithDawn(ctx) {
     sprintMultiplier: SPRINT_10X,
   });
 
+  const wind = createWind({ gain: 0.12, cutoff: 480 });
   let elapsed = 0;
   const AZ = -2.3; // sun azimuth (dawn direction)
 
@@ -103,9 +105,14 @@ export function createMegalithDawn(ctx) {
     dolly.position.set(0, 0, 0);
     dolly.quaternion.identity();
     locomotion.reset();
+    wind.start();
   }
 
-  return { name: "Megalith Dawn", scene, update, onActivate };
+  function onDeactivate() {
+    wind.stop();
+  }
+
+  return { name: "Megalith Dawn", scene, update, onActivate, onDeactivate };
 }
 
 function mkGlow(r, color, opacity) {

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createFlightControls } from "../flightControls.js";
+import { createDrone } from "../audio.js";
 import { HYPERZOOM_REP, HYPERZOOM_SCALE, HYPERZOOM_RATE, HYPERZOOM_BOOST } from "../config.js";
 
 // Scene — "Hyperzoom": a raymarched fractal that continuously magnifies. Space is scaled
@@ -95,12 +96,15 @@ export function createHyperzoom(ctx) {
   scene.add(shell);
 
   const controls = createFlightControls(renderer, dolly, { flySpeed: 8 });
+  const shimmer = createDrone({ freq: 280, type: "triangle", voices: 2, cutoff: 2600, gain: 0.07, lfoRate: 0.2, lfoDepth: 0.25 });
   const _p = new THREE.Vector3();
 
   function update(dt) {
     const intensity = controls.update(dt); // warp accelerates the zoom
     mat.uniforms.uTime.value += dt;
-    mat.uniforms.uZoom.value += (HYPERZOOM_RATE + intensity * HYPERZOOM_BOOST) * dt;
+    const z = mat.uniforms.uZoom.value + (HYPERZOOM_RATE + intensity * HYPERZOOM_BOOST) * dt;
+    mat.uniforms.uZoom.value = z;
+    shimmer.setFreq(260 + (z - Math.floor(z)) * 320); // glides up with each zoom loop
     _p.setFromMatrixPosition(camera.matrixWorld);
     shell.position.copy(_p);
   }
@@ -109,7 +113,12 @@ export function createHyperzoom(ctx) {
     dolly.position.set(0, 0, 0);
     dolly.quaternion.identity();
     controls.reset();
+    shimmer.start();
   }
 
-  return { name: "Hyperzoom", scene, update, onActivate };
+  function onDeactivate() {
+    shimmer.stop();
+  }
+
+  return { name: "Hyperzoom", scene, update, onActivate, onDeactivate };
 }

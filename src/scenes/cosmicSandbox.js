@@ -28,6 +28,15 @@ export function createCosmicSandbox(ctx) {
   const physics = createPhysics();
   built.columns.forEach((c) => physics.addColumn(c));
   built.grabbables.forEach((m) => physics.addGrabbable(m));
+  physics.setCollideHandler((mesh, speed) => {
+    ping({
+      freq: 280 + Math.random() * 220,
+      partials: [1, 2.2, 3.4],
+      dur: 0.35,
+      gain: Math.min(0.04 + speed * 0.02, 0.18),
+      position: mesh.position,
+    });
+  });
   const grab = createGrab(built.grabbables, physics);
   const effects = createEffects({ scene, renderer, physics, grabbables: built.grabbables });
   const flight = createFlight(renderer, dolly);
@@ -99,7 +108,9 @@ export function createCosmicSandbox(ctx) {
 
   function onSelectStart(e) {
     if (toolMenu.open && toolMenu.tryClick(e.target)) return;
-    grab.onSelectStart(e);
+    const grabbed = grab.onSelectStart(e);
+    if (grabbed)
+      ping({ freq: 660, partials: [1, 2, 3], dur: 0.5, gain: 0.12, position: grabbed.position });
   }
 
   function onSelectEnd(e) {

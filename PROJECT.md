@@ -15,7 +15,7 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 
 ## Current state (working)
 - **Scenes (switch with left Y):** **Cosmic Sandbox**, **Fractal Infinity**, **Megalith Dawn**, **Fractal Abyss**, **Vortex Storm**, **Clockwork Titans**, **Crimson Void**, **Hyperzoom**. Each keeps its state when you switch away. Flight scenes share one movement scheme (right stick turn, left stick fly, grip warp).
-- **Audio:** procedural Web Audio — a per-scene ambient drone plus event sounds (Crimson heartbeat booms, Clockwork ticks, Cosmic tool chimes); unlocks on VR entry / first tap.
+- **Audio:** procedural Web Audio — per-scene ambient drone + **3D-positional** event sounds (Cosmic grab/impact chimes, Clockwork ticks + deep gong, Crimson heartbeat booms), plus Megalith wind and a Hyperzoom shimmer that glides with the zoom. Right stick-press mutes. Unlocks on VR entry / first tap.
 - **Service worker** (network-first): new builds load on reload, no cache clearing.
 
 ### Cosmic Sandbox
@@ -91,5 +91,5 @@ A VR playground for Meta Quest 3 built as a set of **selectable scene-experiment
 - Fractal Abyss renders an infinite raymarched fractal; Vortex Storm churns; Clockwork Titans turn.
 - Crimson Void: monoliths loom from red fog and breathe; the heart throbs and the light pulses with it.
 - Hyperzoom: the rainbow fractal magnifies endlessly (no visible jump on the loop); warp dives faster; right stick steers.
-- Audio: each scene hums; Crimson Void thumps with the heartbeat, Clockwork ticks, Cosmic tools chime (after entering VR / a tap).
+- Audio: each scene hums; sounds are spatial (come from objects). Cosmic chimes on grab and on impacts; Crimson thumps with the heartbeat; Clockwork ticks + gongs; Megalith has wind; Hyperzoom shimmers with the zoom. Right stick-press mutes.
 - After a deploy, a reload picks up new scenes (service worker) — no cache clearing.

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { VRButton } from "three/addons/webxr/VRButton.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getPads, button } from "./input.js";
-import { createDrone, resumeAudio } from "./audio.js";
+import { createDrone, resumeAudio, setListenerPose, toggleMute } from "./audio.js";
 import { CAMERA_FAR } from "./config.js";
 import { setupControllers } from "./controllers.js";
 import { createMenu } from "./menu.js";
@@ -45,6 +45,11 @@ let renderer, camera, dolly, clock, controls, controllers;
 let manager, sceneMenu;
 let currentDrone = null;
 let yPrev = false;
+let mutePrev = false;
+const _lp = new THREE.Vector3();
+const _lq = new THREE.Quaternion();
+const _lf = new THREE.Vector3();
+const _lu = new THREE.Vector3();
 
 // switch scene and swap its ambient drone
 function goToScene(id) {
@@ -123,16 +128,26 @@ function init() {
 function render() {
   const dt = clock.getDelta();
 
-  // global: left Y toggles the scene menu
+  // global: left Y = scene menu, right stick-press = mute
   if (renderer.xr.isPresenting) {
-    const { left } = getPads(renderer);
+    const { left, right } = getPads(renderer);
     const y = button(left, 5);
     if (y && !yPrev) sceneMenu.toggle(manager.active.scene);
     yPrev = y;
+    const m = button(right, 3);
+    if (m && !mutePrev) toggleMute();
+    mutePrev = m;
     sceneMenu.update(controllers);
   }
 
   manager.active.update(dt);
+
+  // 3D audio listener follows the head
+  _lp.setFromMatrixPosition(camera.matrixWorld);
+  _lq.setFromRotationMatrix(camera.matrixWorld);
+  _lf.set(0, 0, -1).applyQuaternion(_lq);
+  _lu.set(0, 1, 0).applyQuaternion(_lq);
+  setListenerPose(_lp.x, _lp.y, _lp.z, _lf.x, _lf.y, _lf.z, _lu.x, _lu.y, _lu.z);
 
   if (!renderer.xr.isPresenting) controls.update();
   renderer.render(manager.active.scene, camera);

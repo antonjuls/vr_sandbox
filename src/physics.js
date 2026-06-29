@@ -38,6 +38,7 @@ export function createPhysics() {
 
   const links = []; // { mesh, body }
   const held = new Map(); // mesh -> { prevPos, prevQuat, vel, angVel }
+  let collideHandler = null; // optional (mesh, impactSpeed) => void for impact sounds
 
   function makeShape(desc) {
     if (desc.kind === "box") {
@@ -68,6 +69,17 @@ export function createPhysics() {
     world.addBody(body);
     mesh.userData.body3d = body;
     links.push({ mesh, body });
+
+    // impact sounds: fire the handler on hard collisions (throttled per mesh)
+    body.addEventListener("collide", (e) => {
+      if (!collideHandler) return;
+      const speed = e.contact ? Math.abs(e.contact.getImpactVelocityAlongNormal()) : 0;
+      if (speed < 1.6) return;
+      const now = typeof performance !== "undefined" ? performance.now() : 0;
+      if (now - (mesh.userData._sndT || 0) < 90) return;
+      mesh.userData._sndT = now;
+      collideHandler(mesh, speed);
+    });
   }
 
   // static column obstacle (cannon-es cylinder runs along Y — same as three)
@@ -192,6 +204,10 @@ export function createPhysics() {
     }
   }
 
+  function setCollideHandler(fn) {
+    collideHandler = fn;
+  }
+
   return {
     world,
     addGrabbable,
@@ -202,6 +218,7 @@ export function createPhysics() {
     step,
     remove,
     eachDynamic,
+    setCollideHandler,
   };
 }
 

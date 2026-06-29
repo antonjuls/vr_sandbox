@@ -31,6 +31,7 @@ export function createGrab(grabbables, physics) {
     mesh.material.emissiveIntensity = 0.5;
     physics.beginGrab(mesh);
     heldBy.set(controller, mesh);
+    return mesh; // grabbed (so callers can react, e.g. play a sound)
   }
 
   function onSelectEnd(e) {
