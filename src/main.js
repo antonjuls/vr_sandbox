@@ -7,12 +7,13 @@ import { CAMERA_FAR } from "./config.js";
 import { setupControllers } from "./controllers.js";
 import { createMenu } from "./menu.js";
 import { createSceneManager } from "./sceneManager.js";
-import { createThresholdCathedral } from "./scenes/thresholdCathedral.js";
+import { createLumenDrift } from "./scenes/lumenDrift.js";
 
 // --- Archived scenes ---------------------------------------------------------------
 // Kept for reference / history. The scene files still live in src/scenes/ (and the
 // fractal/flight scenes in src/flightControls.js etc.). To bring one back, uncomment its
 // import here and its entries in SCENES + SCENE_AUDIO below.
+// import { createThresholdCathedral } from "./scenes/thresholdCathedral.js";
 // import { createCosmicSandbox } from "./scenes/cosmicSandbox.js";
 // import { createFractalInfinity } from "./scenes/fractalInfinity.js";
 // import { createMegalithDawn } from "./scenes/megalithDawn.js";
@@ -26,8 +27,9 @@ import { createThresholdCathedral } from "./scenes/thresholdCathedral.js";
 // Each scene is a separate, named world. The scene menu (left Y) switches between them;
 // scenes keep their state when you switch away. main owns the shared rig + render loop.
 const SCENES = [
-  { id: "threshold-cathedral", name: "The Threshold Cathedral", create: createThresholdCathedral },
+  { id: "lumen-drift", name: "Lumen Drift", create: createLumenDrift },
   // --- Archived scenes (uncomment to restore to the scene menu) ---
+  // { id: "threshold-cathedral", name: "The Threshold Cathedral", create: createThresholdCathedral },
   // { id: "cosmic-sandbox", name: "Cosmic Sandbox", create: createCosmicSandbox },
   // { id: "fractal-infinity", name: "Fractal Infinity", create: createFractalInfinity },
   // { id: "megalith-dawn", name: "Megalith Dawn", create: createMegalithDawn },
@@ -40,8 +42,9 @@ const SCENES = [
 
 // per-scene ambient drone (procedural low hum that sets each world's mood)
 const SCENE_AUDIO = {
-  "threshold-cathedral": { freq: 30, type: "sine", voices: 3, detune: 4, cutoff: 240, gain: 0.2, lfoRate: 0.03, lfoDepth: 0.5 },
+  "lumen-drift": { freq: 72, type: "sine", voices: 3, detune: 5, cutoff: 1500, gain: 0.12, lfoRate: 0.1, lfoDepth: 0.3 },
   // --- Archived scenes' drones ---
+  // "threshold-cathedral": { freq: 30, type: "sine", voices: 3, detune: 4, cutoff: 240, gain: 0.2, lfoRate: 0.03, lfoDepth: 0.5 },
   // "cosmic-sandbox": { freq: 110, type: "sine", cutoff: 1200, gain: 0.12 },
   // "fractal-infinity": { freq: 90, type: "triangle", cutoff: 1000, gain: 0.12 },
   // "megalith-dawn": { freq: 48, type: "sine", cutoff: 520, gain: 0.16 },
@@ -113,7 +116,7 @@ function init() {
     items: manager.list().map((s) => ({ id: s.id, label: s.name })),
     onSelect: goToScene,
   });
-  goToScene("threshold-cathedral");
+  goToScene("lumen-drift");
 
   // re-place the rig on VR enter/exit via the active scene's spawn
   const reactivate = () => {

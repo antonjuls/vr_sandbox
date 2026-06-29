@@ -1,7 +1,7 @@
 # PROJECT.md — VR Shapes
 
 ## What it is
-A VR playground for Meta Quest 3 built as named scene-experiments (switchable in-headset via the scene menu, left Y). The **current focus is a single polished scene — "The Threshold Cathedral"**, a grounded liminal-horror experience; the earlier experiments (a cosmic physics sandbox, fly-through fractals, etc.) are **archived for reference**. The goal is a lightweight, instantly browser-openable space (no Unity / store / APK) and a base for wild VR experiments.
+A VR playground for Meta Quest 3 built as named scene-experiments (switchable in-headset via the scene menu, left Y). The **current focus is a single scene — "Lumen Drift"**, an infinite luminous swarm you fly through at warp; earlier experiments (a cosmic physics sandbox, fly-through fractals, a liminal-horror cathedral) are **archived for reference**. The goal is a lightweight, instantly browser-openable space (no Unity / store / APK) and a base for wild VR experiments.
 
 ## Stack and principles
 - Three.js `0.160` (WebXR) + cannon-es `0.20.0` (physics), both via a CDN `importmap`.
@@ -14,11 +14,17 @@ A VR playground for Meta Quest 3 built as named scene-experiments (switchable in
 - `src/config.js` · `src/scene.js` · `src/physics.js` · `src/controllers.js` · `src/grab.js` · `src/locomotion.js` · `src/cosmos.js` · `src/flight.js` · `src/menu.js` · `src/effects.js` · `src/input.js` · `src/sceneManager.js` · `src/scenes/*` · `src/main.js` — subsystems (see CLAUDE.md → "Files").
 
 ## Current state (working)
-- **Active scene: The Threshold Cathedral** — a grounded liminal-horror promenade (see below). The earlier experiment scenes are **archived** (commented out in `main.js`, files kept for reference).
-- **Audio:** procedural Web Audio — a sub-bass drone + a LiminalAudioSystem of **3D-positional** dread (drips from far above, distant metal groans, footsteps that may not be yours, rare colossal impacts) and the final-door heartbeat. Right stick-press mutes; crossing a threshold briefly muffles. Unlocks on VR entry / first tap.
+- **Active scene: Lumen Drift** — an infinite iridescent swarm you fly through at warp (see below). All earlier experiment scenes are **archived** (commented out in `main.js`, files kept for reference).
+- **Audio:** procedural Web Audio — a per-scene ambient drone (Lumen Drift: an airy pad); right stick-press mutes; unlocks on VR entry / first tap. (Archived scenes add 3D-positional event sounds.)
 - **Service worker** (network-first): new builds load on reload, no cache clearing.
 
-### The Threshold Cathedral
+### Lumen Drift
+An infinite, living tide of luminous motes you fly through at warp. All motion runs in the vertex shader and the swarm is wrapped around the camera, so the field is endless and stays smooth even at full speed.
+
+- A slowly shifting nebula sky, ~48k iridescent motes flowing along a curl field, giant glowing orbs drifting by as landmarks, and hyperspace streaks that ignite when you move fast.
+- Flight is the shared scheme: right stick turn, left stick fly toward your gaze, B sprint, left grip warp. Every knob lives in the `LUMEN` object in `config.js`.
+
+### The Threshold Cathedral (archived)
 A grounded walking-horror promenade: you cross a single −Z axis through seven monumental concrete zones toward a door ~300 m tall that was not built for humans. The fear is architectural — scale, distance, silence, and a space that quietly rearranges when you look away. No monsters, no gore, no jumpscares.
 
 - **Zones (near → far):** Arrival Hall (black-glass floor, the far door already glimmering) · Infinite Corridor (its far end recedes and swells as you approach) · Stairwell of Wrong Angles · Observation Void (a bridge over an abyss with colossal shapes drifting far below) · Breathing Archive (giant shelves that swell like lungs) · Door Field (a plain of freestanding doors at every scale, a few with uncanny interiors) · Final Cathedral (the colossal door, a heartbeat behind it).
@@ -52,19 +58,10 @@ Cosmic Sandbox · Fractal Infinity · Megalith Dawn · Fractal Abyss · Vortex S
 
 ## Manual test checklist (on device)
 - Enter VR appears (means the secure context is OK).
-- You start in the Arrival Hall; the giant door glimmers far down the −Z axis.
-- You run by default; turn both ways smoothly; hold B to sprint very fast (~100 km/h).
-- Left trigger toggles the hand flashlight; aim it at a far giant and it lights up in the beam.
-- The murk thickens/thins as you cross between zones, and the sound briefly muffles on each crossing.
-- The Infinite Corridor's far doorway recedes and grows as you approach it.
-- Distant silhouettes are faintly visible at the edges; look straight at one and it fades away.
-- Observation Void: a narrow bridge over an abyss; tiny lights and colossal shapes drift far below.
-- The Breathing Archive's shelves swell and contract slowly.
-- Door Field: doors you aren't looking at turn slightly / change; the special doors show uncanny interiors.
-- Walls and shelves are solid (you can't walk through them); the void bridge is the only way across.
-- A portal doorway shows another place on its surface; walking through it teleports you into a room that shouldn't fit, and back.
-- Final Cathedral: the door is ~300 m tall; a heartbeat (boom + light pulse) grows as you near it; the right trigger forces it open only a crack.
-- Lights flicker (worse near doorways); chains sway; suspended slabs creak overhead.
-- Audio is spatial — drips from above, groans and footsteps around you. Right stick-press mutes.
-- Left Y opens the scene menu (only The Threshold Cathedral is listed).
+- You're floating in a dark, colour-shifting cloud of glowing motes.
+- Left stick flies toward your gaze; right stick turns; B sprints; left grip warps very fast.
+- As you speed up, hyperspace streaks ignite around you and fade when you slow.
+- Giant glowing orbs drift past as landmarks; the swarm flows and twinkles, colours cycling.
+- The field never ends, however far or fast you fly (it wraps around you), and the frame rate holds.
+- Left Y opens the scene menu (only Lumen Drift is listed); right stick-press mutes.
 - After a deploy, a reload picks up the new build (service worker) — no cache clearing.

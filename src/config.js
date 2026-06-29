@@ -182,3 +182,22 @@ export const CATHEDRAL = {
     heartbeat: 1.15, // s — the slow pulse from behind the final door
   },
 };
+
+// ====== LUMEN DRIFT scene (infinite luminous swarm you fly through) ======
+// All motion is computed in the vertex shader from uTime, and the swarm is wrapped around
+// the camera (an infinite field with no per-frame CPU work). Knobs:
+export const LUMEN = {
+  count: 48000, // motes (GPU points). Lower if fill-rate drops on device.
+  cell: 1200, // camera-relative wrap cell (the swarm always surrounds you)
+  size: 1.6, // base point size
+  sizeScale: 620, // perspective size scale (px ≈ size·scale / distance)
+  drift: 7, // ambient flow speed when you're still
+  amp1: 60, // large-scale swirl amplitude
+  amp2: 26, // fine swirl amplitude
+  flySpeed: 50, // left-stick fly speed (B sprints ×4; left grip warps far faster)
+  orbs: 6, // giant glowing landmark orbs drifting by
+  orbCell: 2600, // their wrap cell
+  streaks: 600, // hyperspace streaks that ignite with speed
+  streakLen: 70, // streak length at full warp
+  streakRange: 700, // depth the streaks occupy around you
+};
