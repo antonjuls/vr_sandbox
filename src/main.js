@@ -6,10 +6,11 @@ import { createPhysics } from "./physics.js";
 import { setupControllers } from "./controllers.js";
 import { createGrab } from "./grab.js";
 import { createLocomotion } from "./locomotion.js";
+import { createEffects } from "./effects.js";
 
 let renderer, camera, dolly, clock, controls;
 let scene;
-let physics, grab, locomotion, controllers;
+let physics, grab, locomotion, controllers, effects;
 let elapsed = 0;
 
 init();
@@ -51,6 +52,12 @@ function init() {
     grab.onSelectEnd,
   );
   locomotion = createLocomotion(renderer, dolly);
+  effects = createEffects({
+    scene,
+    renderer,
+    physics,
+    grabbables: built.grabbables,
+  });
 
   // reset the rig on VR enter/exit — start at the origin
   const resetRig = () => {
@@ -82,6 +89,7 @@ function render() {
     grab.updateHover(controllers);
   }
 
+  effects.update(dt); // left-hand powers: spawn / black hole / blast (sets velocities before the step)
   physics.step(dt); // simulate + copy body transforms onto meshes (on desktop too)
 
   // animated coloured lights

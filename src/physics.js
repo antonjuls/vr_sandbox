@@ -171,7 +171,38 @@ export function createPhysics() {
     }
   }
 
-  return { world, addGrabbable, addColumn, beginGrab, updateHeld, endGrab, step };
+  // remove a shape's body from the world and the links list (caller removes the mesh)
+  function remove(mesh) {
+    const body = mesh.userData.body3d;
+    if (!body) return;
+    world.removeBody(body);
+    const i = links.findIndex((l) => l.mesh === mesh);
+    if (i >= 0) links.splice(i, 1);
+    held.delete(mesh);
+    mesh.userData.body3d = undefined;
+  }
+
+  // run cb(body, mesh) for every dynamic, non-held shape (for force fields).
+  // cb must not add/remove bodies — collect and mutate after the loop.
+  function eachDynamic(cb) {
+    for (const { mesh, body } of links) {
+      if (mesh.userData.held) continue;
+      if (body.type !== CANNON.Body.DYNAMIC) continue;
+      cb(body, mesh);
+    }
+  }
+
+  return {
+    world,
+    addGrabbable,
+    addColumn,
+    beginGrab,
+    updateHeld,
+    endGrab,
+    step,
+    remove,
+    eachDynamic,
+  };
 }
 
 // Angular velocity from the difference of two quaternions (out, prev, cur — cannon.Quaternion).

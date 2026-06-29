@@ -12,12 +12,14 @@ WebXR sandbox for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, no b
 
 ## Files
 - `index.html` — markup, overlay, `importmap` and the entry point `<script type="module" src="./src/main.js">`.
-- `src/config.js` — **all the knobs** (movement + physics + simulation step). Change behaviour here.
-- `src/scene.js` — the world: lights, floor, columns, stars, grabbable shapes. `buildScene()` → `{ scene, grabbables, columns }`.
+- `src/config.js` — **all the knobs** (movement + physics + effects + simulation step). Change behaviour here.
+- `src/scene.js` — the world: lights, floor, columns, stars, grabbable shapes. `buildScene()` → `{ scene, grabbables, columns }`. Also exports `randomGrabbable(pos)` for the spawner.
 - `src/physics.js` — cannon-es wrapper: world, bodies, sync, grabbing. `createPhysics()`.
 - `src/controllers.js` — controllers, grips, hands, ray. `setupControllers(renderer, dolly, onStart, onEnd)`.
 - `src/grab.js` — ray target picking, highlight, feeding the controller pose into physics. `createGrab(grabbables, physics)`.
-- `src/locomotion.js` — movement and turning. `createLocomotion(renderer, dolly)`.
+- `src/locomotion.js` — movement, turning, jump, sprint. `createLocomotion(renderer, dolly)`.
+- `src/effects.js` — left-hand powers (black hole, force blast, shape spawner) + particle pool. `createEffects({ scene, renderer, physics, grabbables })`.
+- `src/input.js` — shared XR gamepad helpers: `getPads`, `thumb`, `button`.
 - `src/main.js` — wires everything together plus the render loop.
 - `PROJECT.md` — what the project is, its state, the roadmap.
 
@@ -29,6 +31,7 @@ WebXR sandbox for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, no b
   Each frame `step(dt)` runs `world.step(FIXED_STEP, dt, MAX_SUBSTEPS)` and **copies the body transform into the mesh** (the body is the source of truth). Floor — `CANNON.Plane`, columns — static `CANNON.Cylinder`, shapes — `Sphere`/`Box` (box = `Box`, everything else = `Sphere` from the bounding sphere).
 - **Grab = kinematic body.** On grab, meshes are **NOT reparented** (there used to be `controller.attach`). On `selectstart` the shape's body becomes `KINEMATIC`, and every frame `grab.updateHeld` feeds the controller's world pose (`matrixWorld.decompose`) into `physics.updateHeld` — the body teleports onto the hand and gets the hand velocity (so it can push others). On `selectend` the body goes `DYNAMIC` again and receives the hand velocity → **throw** (capped by `MAX_THROW`). The same `select` events arrive from a hand pinch.
 - **Locomotion (`src/locomotion.js`).** Gamepads via `session.inputSources` by `handedness`. Left stick — move relative to gaze (horizontal). Right — turn (smooth by default, snap behind the `SMOOTH_TURN` flag), rotating around the world-space head position. Right **A** (`buttons[4]`) — jump (vertical velocity on the rig + gravity, ground-only). Right **B** (`buttons[5]`) — sprint (speed × `SPRINT_MULTIPLIER` while held).
+- **Effects (`src/effects.js`).** Left-hand powers, read in `effects.update(dt)` **before** `physics.step` so velocity changes integrate the same step. Left **X** spawns a shape ahead of gaze (recycles the oldest past `MAX_SHAPES`); left **Y** toggles a black hole that pulls + swirls dynamic bodies (`physics.eachDynamic`) and swallows them at the horizon (`physics.remove`); left **grip** is a radial force blast. Particle bursts come from one pooled `THREE.Points` (preallocated typed arrays); the black hole adds a core/halo/disk plus orbiting swirl particles.
 - **Hand tracking:** `XRHandModelFactory('spheres')` — joint primitives, no external assets. Enabled via `VRButton optionalFeatures`.
 
 ## Conventions
@@ -48,6 +51,7 @@ WebXR sandbox for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, no b
 - **cannon-es: the cylinder runs along the Y axis** (like `CylinderGeometry`) — columns need no extra rotation. `CANNON.Plane` faces +Z, so the floor is rotated `-PI/2` around X.
 - **Changing a body's type needs `body.updateMassProperties()`** (DYNAMIC<->KINEMATIC), otherwise `invMass` isn't recomputed and the shape won't fall after a throw.
 - A held body is driven by teleport + velocity → it lags at most one frame of motion (imperceptible in VR).
+- `eachDynamic` callbacks must not add/remove bodies mid-iteration — `effects` collects swallow targets and removes them after the loop. Effects run before `physics.step` so spawns/removes/impulses land in the same frame.
 
 ## Not done yet (see roadmap in PROJECT.md)
 Teleport arc, comfort vignette, spawning shapes with the grip button, haptics on grab/hover.

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { getPads, thumb, button } from "./input.js";
 import {
   SPEED,
   SMOOTH_TURN,
@@ -26,32 +27,6 @@ export function createLocomotion(renderer, dolly) {
   const _move = new THREE.Vector3();
   const _camQ = new THREE.Quaternion();
 
-  function getPads() {
-    let left = null;
-    let right = null;
-    const s = renderer.xr.getSession();
-    if (s) {
-      for (const src of s.inputSources) {
-        if (!src.gamepad) continue;
-        if (src.handedness === "left") left = src.gamepad;
-        else if (src.handedness === "right") right = src.gamepad;
-      }
-    }
-    return { left, right };
-  }
-
-  function thumb(gp) {
-    if (!gp) return { x: 0, y: 0 };
-    const a = gp.axes;
-    if (a.length >= 4) return { x: a[2], y: a[3] }; // on Quest the stick is axes 2/3
-    if (a.length >= 2) return { x: a[0], y: a[1] };
-    return { x: 0, y: 0 };
-  }
-
-  function button(gp, i) {
-    return !!(gp && gp.buttons && gp.buttons[i] && gp.buttons[i].pressed);
-  }
-
   // rotate the rig around the world-space head position
   function turnAroundHead(angle) {
     const xrCam = renderer.xr.getCamera();
@@ -62,7 +37,7 @@ export function createLocomotion(renderer, dolly) {
   }
 
   function update(dt) {
-    const { left, right } = getPads();
+    const { left, right } = getPads(renderer);
 
     // move relative to gaze direction (horizontal plane)
     const ls = thumb(left);

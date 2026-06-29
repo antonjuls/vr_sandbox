@@ -1,7 +1,54 @@
 import * as THREE from "three";
 import { BODY_MASS } from "./config.js";
 
-// Builds the world: lights, floor, landmark columns, stars and grabbable shapes.
+// Shape catalogue (geometries are shared across all instances). Each def carries a
+// collider descriptor: box → CANNON.Box, everything else → CANNON.Sphere from bounding sphere.
+const R = 0.13;
+const DEFS = [
+  { geo: new THREE.TetrahedronGeometry(R * 1.25), color: 0xff6b6b, shape: "sphere" },
+  {
+    geo: new THREE.BoxGeometry(R * 1.6, R * 1.6, R * 1.6),
+    color: 0x4ecdc4,
+    shape: "box",
+    half: [R * 0.8, R * 0.8, R * 0.8],
+  },
+  { geo: new THREE.OctahedronGeometry(R * 1.2), color: 0xffd166, shape: "sphere" },
+  { geo: new THREE.DodecahedronGeometry(R * 1.1), color: 0xa78bfa, shape: "sphere" },
+  { geo: new THREE.IcosahedronGeometry(R * 1.15), color: 0x60a5fa, shape: "sphere" },
+  { geo: new THREE.TorusKnotGeometry(R * 0.8, R * 0.28, 120, 16), color: 0xf472b6, shape: "sphere" },
+];
+DEFS.forEach((d) => d.geo.computeBoundingSphere());
+
+// Build one grabbable mesh from a def (own material so highlighting is per-instance).
+function makeGrabbable(def, x, y, z) {
+  const mesh = new THREE.Mesh(
+    def.geo,
+    new THREE.MeshStandardMaterial({
+      color: def.color,
+      emissive: def.color,
+      emissiveIntensity: 0.12,
+      metalness: 0.55,
+      roughness: 0.25,
+    }),
+  );
+  mesh.position.set(x, y, z);
+  mesh.userData.grabbable = true;
+  mesh.userData.held = false;
+  mesh.userData.baseEmissive = 0.12;
+  mesh.userData.body =
+    def.shape === "box"
+      ? { kind: "box", half: def.half, mass: BODY_MASS }
+      : { kind: "sphere", radius: def.geo.boundingSphere.radius, mass: BODY_MASS };
+  return mesh;
+}
+
+// A random shape at a position — used by the spawner.
+export function randomGrabbable(pos) {
+  const def = DEFS[(Math.random() * DEFS.length) | 0];
+  return makeGrabbable(def, pos[0], pos[1], pos[2]);
+}
+
+// Builds the world: lights, floor, landmark columns, stars and the initial grabbable row.
 // Returns { scene, grabbables, columns } — physics creates bodies from this data.
 export function buildScene() {
   const scene = new THREE.Scene();
@@ -63,59 +110,14 @@ export function buildScene() {
 
   scene.add(makeStars());
 
-  // --- grabbable shapes ---
-  const grabbables = makeGrabbables();
+  // --- grabbable shapes (an even front row with a slight height jitter) ---
+  const N = DEFS.length;
+  const grabbables = DEFS.map((def, i) =>
+    makeGrabbable(def, (i - (N - 1) / 2) * 0.4, 1.4 + (i % 2 ? 0.12 : 0), -0.8),
+  );
   grabbables.forEach((m) => scene.add(m));
 
   return { scene, grabbables, columns };
-}
-
-// Platonic solids + a torus knot. Each shape carries a collider descriptor in
-// userData.body: box → CANNON.Box, everything else → CANNON.Sphere from the bounding sphere.
-function makeGrabbables() {
-  const r = 0.13;
-  const defs = [
-    { geo: new THREE.TetrahedronGeometry(r * 1.25), color: 0xff6b6b, shape: "sphere" },
-    {
-      geo: new THREE.BoxGeometry(r * 1.6, r * 1.6, r * 1.6),
-      color: 0x4ecdc4,
-      shape: "box",
-      half: [r * 0.8, r * 0.8, r * 0.8],
-    },
-    { geo: new THREE.OctahedronGeometry(r * 1.2), color: 0xffd166, shape: "sphere" },
-    { geo: new THREE.DodecahedronGeometry(r * 1.1), color: 0xa78bfa, shape: "sphere" },
-    { geo: new THREE.IcosahedronGeometry(r * 1.15), color: 0x60a5fa, shape: "sphere" },
-    {
-      geo: new THREE.TorusKnotGeometry(r * 0.8, r * 0.28, 120, 16),
-      color: 0xf472b6,
-      shape: "sphere",
-    },
-  ];
-  const N = defs.length;
-  const out = [];
-  defs.forEach((d, i) => {
-    const mat = new THREE.MeshStandardMaterial({
-      color: d.color,
-      emissive: d.color,
-      emissiveIntensity: 0.12,
-      metalness: 0.55,
-      roughness: 0.25,
-    });
-    const mesh = new THREE.Mesh(d.geo, mat);
-    // an even front row with a slight height jitter — shapes fall and spread out
-    mesh.position.set((i - (N - 1) / 2) * 0.4, 1.4 + (i % 2 ? 0.12 : 0), -0.8);
-
-    d.geo.computeBoundingSphere();
-    mesh.userData.grabbable = true;
-    mesh.userData.held = false;
-    mesh.userData.baseEmissive = 0.12;
-    mesh.userData.body =
-      d.shape === "box"
-        ? { kind: "box", half: d.half, mass: BODY_MASS }
-        : { kind: "sphere", radius: d.geo.boundingSphere.radius, mass: BODY_MASS };
-    out.push(mesh);
-  });
-  return out;
 }
 
 function makeStars() {
