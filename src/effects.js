@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { getPads, button } from "./input.js";
 import { randomGrabbable } from "./scene.js";
 import {
   GRAVITY,
@@ -11,37 +10,44 @@ import {
   BH_HORIZON,
   BH_REACH,
   SWIRL_PARTICLES,
-  BLAST_RADIUS,
-  BLAST_IMPULSE,
+  SUPERNOVA_RADIUS,
+  SUPERNOVA_IMPULSE,
+  STAR_RADIUS,
+  STAR_DRIFT,
+  STAR_MAX,
   MAX_SHAPES,
   SPAWN_SPEED,
   PARTICLES,
 } from "./config.js";
 
-// "Singularity sandbox" — the wild stuff on the LEFT hand:
-//   left X      → spawn a shape (launched along your gaze; recycles oldest past MAX_SHAPES)
-//   left Y      → toggle a black hole ahead of your gaze (pulls/swirls/swallows shapes)
-//   left grip   → force blast that shoves nearby shapes away
-// Plus a pooled particle system used for swallows, blasts and spawns.
+// Tool actions + their particle/visual systems. main drives them from the menu:
+//   toggleBlackHole() · supernova() · spawnStar() · spawnShape()
+// plus a pooled particle burst system and a black hole gravity field.
 export function createEffects({ scene, renderer, physics, grabbables }) {
-  let t = 0; // time accumulator for pulsing visuals
-  let xPrev = false, yPrev = false, gPrev = false; // button edge-detect
-
-  // reusable temporaries (no per-frame allocations)
+  let t = 0;
   const _hp = new THREE.Vector3();
   const _hq = new THREE.Quaternion();
   const _hf = new THREE.Vector3();
   const _toSwallow = [];
-  const COL_BH = new THREE.Color(0xaa66ff);
   const COL_COLLAPSE = new THREE.Color(0xffffff);
-  const COL_BLAST = new THREE.Color(0x88ccff);
+  const COL_BH = new THREE.Color(0xaa66ff);
+  const COL_NOVA = new THREE.Color(0xfff0c0);
+
+  const additive = (color, opacity) =>
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
 
   // ---------- particle burst pool ----------
   const pPos = new Float32Array(PARTICLES * 3);
   const pCol = new Float32Array(PARTICLES * 3);
   const pVel = new Float32Array(PARTICLES * 3);
   const pLife = new Float32Array(PARTICLES);
-  for (let i = 0; i < PARTICLES; i++) pPos[i * 3 + 1] = -9999; // park dead particles
+  for (let i = 0; i < PARTICLES; i++) pPos[i * 3 + 1] = -9999;
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
   pGeo.setAttribute("color", new THREE.BufferAttribute(pCol, 3));
@@ -96,8 +102,8 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
       pPos[j + 2] += pVel[j + 2] * dt;
       pCol[j] *= 0.95;
       pCol[j + 1] *= 0.95;
-      pCol[j + 2] *= 0.95; // fade out (additive → dims to invisible)
-      if (pLife[i] <= 0) pPos[j + 1] = -9999; // park when dead
+      pCol[j + 2] *= 0.95;
+      if (pLife[i] <= 0) pPos[j + 1] = -9999;
     }
     pGeo.attributes.position.needsUpdate = true;
     pGeo.attributes.color.needsUpdate = true;
@@ -106,11 +112,7 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
   // ---------- black hole visuals ----------
   const bhGroup = new THREE.Group();
   bhGroup.visible = false;
-  const core = new THREE.Mesh(
-    new THREE.SphereGeometry(BH_RADIUS, 24, 16),
-    new THREE.MeshBasicMaterial({ color: 0x000000 }),
-  );
-  bhGroup.add(core);
+  bhGroup.add(new THREE.Mesh(new THREE.SphereGeometry(BH_RADIUS, 24, 16), new THREE.MeshBasicMaterial({ color: 0x000000 })));
   const halo = new THREE.Mesh(
     new THREE.SphereGeometry(BH_RADIUS * 1.35, 24, 16),
     new THREE.MeshBasicMaterial({
@@ -123,21 +125,10 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
     }),
   );
   bhGroup.add(halo);
-  const disk = new THREE.Mesh(
-    new THREE.RingGeometry(BH_RADIUS * 1.5, BH_RADIUS * 3.4, 64),
-    new THREE.MeshBasicMaterial({
-      color: 0xff7a33,
-      transparent: true,
-      opacity: 0.55,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    }),
-  );
-  disk.rotation.x = -Math.PI / 2 + 0.4; // tilt the accretion disk
+  const disk = new THREE.Mesh(new THREE.RingGeometry(BH_RADIUS * 1.5, BH_RADIUS * 3.4, 64), additive(0xff7a33, 0.55));
+  disk.rotation.x = -Math.PI / 2 + 0.4;
   bhGroup.add(disk);
 
-  // orbiting swirl particles (local to the group)
   const sPos = new Float32Array(SWIRL_PARTICLES * 3);
   const sR = new Float32Array(SWIRL_PARTICLES);
   const sAng = new Float32Array(SWIRL_PARTICLES);
@@ -147,24 +138,24 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
   for (let i = 0; i < SWIRL_PARTICLES; i++) {
     sR[i] = BH_RADIUS * 1.4 + Math.random() * BH_RADIUS * 2.4;
     sAng[i] = Math.random() * Math.PI * 2;
-    sSpd[i] = (BH_RADIUS / sR[i]) * (6 + Math.random() * 4); // inner orbits faster
+    sSpd[i] = (BH_RADIUS / sR[i]) * (6 + Math.random() * 4);
     sY[i] = (Math.random() - 0.5) * BH_RADIUS * 0.6;
   }
   const swirlGeo = new THREE.BufferGeometry();
   swirlGeo.setAttribute("position", new THREE.BufferAttribute(sPos, 3));
-  const swirl = new THREE.Points(
-    swirlGeo,
-    new THREE.PointsMaterial({
-      color: 0xffbb66,
-      size: 0.04,
-      transparent: true,
-      opacity: 0.9,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    }),
+  bhGroup.add(
+    new THREE.Points(
+      swirlGeo,
+      new THREE.PointsMaterial({
+        color: 0xffbb66,
+        size: 0.04,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    ),
   );
-  swirl.frustumCulled = false;
-  bhGroup.add(swirl);
   scene.add(bhGroup);
 
   const blackHole = { active: false, pos: new THREE.Vector3() };
@@ -175,60 +166,84 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
     disk.material.opacity = 0.5 + 0.15 * Math.sin(t * 3 + 1);
     for (let i = 0; i < SWIRL_PARTICLES; i++) {
       sAng[i] += sSpd[i] * dt;
-      sR[i] -= dt * 0.04; // slow inward drift
+      sR[i] -= dt * 0.04;
       if (sR[i] < BH_RADIUS * 1.2) sR[i] = BH_RADIUS * 1.4 + Math.random() * BH_RADIUS * 2.4;
       const x = Math.cos(sAng[i]) * sR[i];
       const z = Math.sin(sAng[i]) * sR[i];
       const y0 = sY[i];
       const j = i * 3;
-      sPos[j] = x; // tilt the swirl plane to match the disk
+      sPos[j] = x;
       sPos[j + 1] = y0 * Math.cos(TILT) - z * Math.sin(TILT);
       sPos[j + 2] = y0 * Math.sin(TILT) + z * Math.cos(TILT);
     }
     swirlGeo.attributes.position.needsUpdate = true;
   }
 
-  // ---------- blast shockwave pool ----------
+  // ---------- shockwave pool ----------
   const shocks = [];
   for (let i = 0; i < 4; i++) {
-    const m = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 20, 12),
-      new THREE.MeshBasicMaterial({
-        color: 0x88ccff,
-        transparent: true,
-        opacity: 0,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
+    const m = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), additive(0x88ccff, 0));
     m.visible = false;
     scene.add(m);
-    shocks.push({ mesh: m, age: 0, alive: false });
+    shocks.push({ mesh: m, age: 0, alive: false, radius: 1, life: 0.5 });
   }
 
-  function spawnShock(pos) {
+  function spawnShock(pos, radius, color, life) {
     const s = shocks.find((s) => !s.alive) || shocks[0];
     s.mesh.position.set(pos.x, pos.y, pos.z);
+    s.mesh.material.color.set(color);
     s.mesh.scale.setScalar(0.2);
     s.mesh.material.opacity = 0.6;
     s.mesh.visible = true;
     s.age = 0;
     s.alive = true;
+    s.radius = radius;
+    s.life = life;
   }
 
   function updateShocks(dt) {
     for (const s of shocks) {
       if (!s.alive) continue;
       s.age += dt;
-      const k = s.age / 0.5; // 0.5 s life
+      const k = s.age / s.life;
       if (k >= 1) {
         s.alive = false;
         s.mesh.visible = false;
         continue;
       }
-      s.mesh.scale.setScalar(0.2 + k * BLAST_RADIUS);
+      s.mesh.scale.setScalar(0.2 + k * s.radius);
       s.mesh.material.opacity = 0.6 * (1 - k);
+    }
+  }
+
+  // ---------- spawned mini-stars ----------
+  const stars = [];
+
+  function spawnStar() {
+    if (stars.length >= STAR_MAX) {
+      const old = stars.shift();
+      scene.remove(old.group);
+      old.group.traverse((o) => o.material && o.material.dispose());
+    }
+    headPose();
+    const color = new THREE.Color().setHSL(Math.random(), 0.7, 0.6);
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(STAR_RADIUS, 32, 24), new THREE.MeshBasicMaterial({ color })));
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(STAR_RADIUS * 1.8, 24, 16), additive(color, 0.4)));
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(STAR_RADIUS * 3, 16, 12), additive(color, 0.14)));
+    g.add(new THREE.PointLight(color, 6, 30));
+    g.position.set(_hp.x + _hf.x * 2.5, _hp.y + _hf.y * 2.5, _hp.z + _hf.z * 2.5);
+    scene.add(g);
+    stars.push({ group: g, vx: _hf.x * STAR_DRIFT, vy: _hf.y * STAR_DRIFT, vz: _hf.z * STAR_DRIFT });
+    burst(g.position, color, 40, 3);
+  }
+
+  function updateStars(dt) {
+    for (const s of stars) {
+      s.group.position.x += s.vx * dt;
+      s.group.position.y += s.vy * dt;
+      s.group.position.z += s.vz * dt;
+      s.group.rotation.y += dt * 0.3;
     }
   }
 
@@ -238,7 +253,7 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
     scene.remove(mesh);
     const i = grabbables.indexOf(mesh);
     if (i >= 0) grabbables.splice(i, 1);
-    mesh.material.dispose(); // geometry is shared, only the material is per-instance
+    mesh.material.dispose();
   }
 
   function headPose() {
@@ -267,7 +282,7 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
 
   function toggleBlackHole() {
     if (blackHole.active) {
-      burst(blackHole.pos, COL_COLLAPSE, 90, 3.5); // implosion flash
+      burst(blackHole.pos, COL_COLLAPSE, 90, 3.5);
       blackHole.active = false;
       bhGroup.visible = false;
       return;
@@ -289,26 +304,27 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
   function swallow(mesh) {
     burst(mesh.position, mesh.material.color, 30, 2.5);
     removeShape(mesh);
-    bhScale = Math.min(bhScale + 0.05, 2.2); // the hole grows as it feeds
+    bhScale = Math.min(bhScale + 0.05, 2.2);
     bhGroup.scale.setScalar(bhScale);
   }
 
-  function blast() {
+  function supernova() {
     headPose();
+    const center = { x: _hp.x + _hf.x * 1.5, y: _hp.y + _hf.y * 1.5, z: _hp.z + _hf.z * 1.5 };
     physics.eachDynamic((body) => {
-      const dx = body.position.x - _hp.x;
-      const dy = body.position.y - _hp.y;
-      const dz = body.position.z - _hp.z;
+      const dx = body.position.x - center.x;
+      const dy = body.position.y - center.y;
+      const dz = body.position.z - center.z;
       const r = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      if (r > BLAST_RADIUS || r < 1e-3) return;
-      const f = (BLAST_IMPULSE * (1 - r / BLAST_RADIUS)) / r; // stronger near the centre
+      if (r > SUPERNOVA_RADIUS || r < 1e-3) return;
+      const f = (SUPERNOVA_IMPULSE * (1 - r / SUPERNOVA_RADIUS)) / r;
       body.wakeUp();
       body.velocity.x += dx * f;
-      body.velocity.y += dy * f + 1.5; // a little lift
+      body.velocity.y += dy * f + 2;
       body.velocity.z += dz * f;
     });
-    spawnShock(_hp);
-    burst(_hp, COL_BLAST, 70, 4);
+    spawnShock(center, SUPERNOVA_RADIUS, 0xfff0c0, 0.6);
+    burst(center, COL_NOVA, 160, 6);
   }
 
   function applyBlackHole(dt) {
@@ -323,13 +339,12 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
         return;
       }
       const inv = 1 / r;
-      const ux = dx * inv, uy = dy * inv, uz = dz * inv; // direction toward the hole
+      const ux = dx * inv, uy = dy * inv, uz = dz * inv;
       const accel = Math.min(BH_PULL / (r * r), BH_MAX_ACCEL);
       body.wakeUp();
       body.velocity.x += ux * accel * dt;
       body.velocity.y += uy * accel * dt;
       body.velocity.z += uz * accel * dt;
-      // swirl: tangent = up × dir = (uz, 0, -ux), so shapes orbit instead of dropping straight in
       const tl = Math.hypot(uz, ux) || 1;
       const sw = ((BH_SWIRL / r) * dt) / tl;
       body.velocity.x += uz * sw;
@@ -342,21 +357,11 @@ export function createEffects({ scene, renderer, physics, grabbables }) {
 
   function update(dt) {
     t += dt;
-    const { left } = getPads(renderer);
-    const x = button(left, 4);
-    const y = button(left, 5);
-    const g = button(left, 1);
-    if (x && !xPrev) spawnShape();
-    if (y && !yPrev) toggleBlackHole();
-    if (g && !gPrev) blast();
-    xPrev = x;
-    yPrev = y;
-    gPrev = g;
-
     if (blackHole.active) applyBlackHole(dt);
     updateParticles(dt);
     updateShocks(dt);
+    updateStars(dt);
   }
 
-  return { update };
+  return { update, spawnShape, toggleBlackHole, supernova, spawnStar };
 }

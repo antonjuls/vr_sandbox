@@ -53,7 +53,7 @@ export function randomGrabbable(pos) {
 export function buildScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x05060a);
-  scene.fog = new THREE.FogExp2(0x05060a, 0.05);
+  scene.fog = new THREE.FogExp2(0x05060a, 0.00012); // very thin — keeps depth without hiding the cosmos
 
   // --- lights ---
   scene.add(new THREE.HemisphereLight(0x8899ff, 0x101018, 0.6));

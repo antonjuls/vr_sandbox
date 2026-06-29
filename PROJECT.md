@@ -11,14 +11,16 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 ## Structure
 - `index.html` — markup + `importmap` + entry point.
 - `src/config.js` — all settings (movement, physics, simulation step).
-- `src/config.js` · `src/scene.js` · `src/physics.js` · `src/controllers.js` · `src/grab.js` · `src/locomotion.js` · `src/effects.js` · `src/input.js` · `src/main.js` — subsystems (see CLAUDE.md → "Files").
+- `src/config.js` · `src/scene.js` · `src/physics.js` · `src/controllers.js` · `src/grab.js` · `src/locomotion.js` · `src/cosmos.js` · `src/flight.js` · `src/menu.js` · `src/effects.js` · `src/input.js` · `src/main.js` — subsystems (see CLAUDE.md → "Files").
 
 ## Current state (working)
 - Scene: 5 Platonic solids + a torus knot, a grid floor, landmark columns, stars, coloured lights.
 - **Physics (cannon-es):** shapes fall under gravity (9.81 m/s²), bounce, **collide with each other and with the columns**, settle and sleep. The box lies flat (Box collider), everything else uses a sphere collider.
 - **Grab and throw** with a ray — both controllers **and** hands (pinch). A held shape is a kinematic body that follows the hand and pushes others; releasing = a throw with the hand velocity.
 - Movement: left stick — move relative to gaze; right stick — turn (smooth by default, snap behind the `SMOOTH_TURN` flag). Right **A** — jump, right **B** — sprint (hold to move fast).
-- **Powers (left hand):** left **X** spawns shapes; left **Y** toggles a black hole that pulls, swirls and swallows shapes (with a particle vortex + accretion disk); left **grip** fires a force blast. Pooled particle bursts for swallows / blasts / spawns.
+- **Cosmos:** a gigantic backdrop — colossal ringed gas giant, blazing sun, supermassive black hole with a vast accretion disk, a spiral galaxy and deep starfields — built for overwhelming scale.
+- **Warp flight:** the Warp tool flies you toward your gaze at high speed with hyperspace streaks; lift off the ground and cross space toward the giant bodies.
+- **Tool menu (left X):** a floating panel; point the right ray + trigger to pick the tool used by **left grip** — Warp, Black Hole, Supernova, Star Forge, Drop Shape. Pooled particle bursts throughout.
 - Hand tracking (sphere model), Quest controller models, pointer ray.
 - Desktop mode with OrbitControls for quick checks without a headset.
 
@@ -33,7 +35,7 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 1. **Comfort locomotion**: a comfort vignette at the edges during smooth movement (anti-nausea). Cheap, big impact on feel.
 2. **Teleport arc** on the left grip as an alternative to the stick.
 3. **Haptics** on grab/hover/impact (`gamepad.hapticActuators.pulse`).
-4. **More powers & tuning**: spawn / black hole / blast are in (left hand) — next could be portals, time-slow or magnet hands; plus tuning their `config.js` knobs.
+4. **More powers & tuning**: warp, black hole, supernova, star forge, drop shape are in (menu-selected) — next could be portals, time-slow, magnet hands, or grabbable planets; plus tuning the `config.js` knobs.
 5. **Physics polish**: tune mass/friction/restitution in `config.js`, an audio click on grab/impact, exact colliders (convex hulls instead of spheres).
 6. **Polish**: tune speeds, a skybox gradient.
 
@@ -50,5 +52,7 @@ A VR sandbox for Meta Quest 3: geometric solids with real physics (gravity, boun
 - Shapes fall and settle on the floor; the box lies flat, doesn't hover.
 - A thrown shape flies in an arc, **collides with other shapes and columns**, settles and doesn't jitter.
 - You can build a stack of several shapes.
-- Left X spawns shapes; left Y opens a black hole that swirls shapes in and swallows them; left grip blasts shapes away.
+- Left X opens the tool menu; pointing the right ray + trigger selects a tool; left grip uses it.
+- Warp (grip) flies toward gaze; you can leave the ground and approach the giant planet / sun / black hole; releasing decelerates.
+- Supernova flings shapes; Star Forge spawns a drifting glowing star; Black Hole swirls shapes in and swallows them.
 - A released (placed) shape stays put when you move away.

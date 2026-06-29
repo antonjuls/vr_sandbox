@@ -17,10 +17,13 @@ WebXR sandbox for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, no b
 - `src/physics.js` — cannon-es wrapper: world, bodies, sync, grabbing. `createPhysics()`.
 - `src/controllers.js` — controllers, grips, hands, ray. `setupControllers(renderer, dolly, onStart, onEnd)`.
 - `src/grab.js` — ray target picking, highlight, feeding the controller pose into physics. `createGrab(grabbables, physics)`.
-- `src/locomotion.js` — movement, turning, jump, sprint. `createLocomotion(renderer, dolly)`.
-- `src/effects.js` — left-hand powers (black hole, force blast, shape spawner) + particle pool. `createEffects({ scene, renderer, physics, grabbables })`.
+- `src/locomotion.js` — ground movement, turning, jump, sprint; floats while flying. `createLocomotion(renderer, dolly)`.
+- `src/effects.js` — tool actions (black hole, supernova, star forge, shape drop) + particle pool. `createEffects({ scene, renderer, physics, grabbables })`.
+- `src/cosmos.js` — gigantic cosmic backdrop (gas giant, sun, supermassive black hole, galaxy, deep stars) + hyperspace streaks. `createCosmos(scene, camera)`.
+- `src/flight.js` — warp flight toward gaze. `createFlight(renderer, dolly)`.
+- `src/menu.js` — floating VR tool menu (ray-selected). `createMenu({ scene, renderer, items, active, onSelect })`.
 - `src/input.js` — shared XR gamepad helpers: `getPads`, `thumb`, `button`.
-- `src/main.js` — wires everything together plus the render loop.
+- `src/main.js` — wires everything together, owns the active tool, plus the render loop.
 - `PROJECT.md` — what the project is, its state, the roadmap.
 
 ## Architecture
@@ -31,7 +34,10 @@ WebXR sandbox for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, no b
   Each frame `step(dt)` runs `world.step(FIXED_STEP, dt, MAX_SUBSTEPS)` and **copies the body transform into the mesh** (the body is the source of truth). Floor — `CANNON.Plane`, columns — static `CANNON.Cylinder`, shapes — `Sphere`/`Box` (box = `Box`, everything else = `Sphere` from the bounding sphere).
 - **Grab = kinematic body.** On grab, meshes are **NOT reparented** (there used to be `controller.attach`). On `selectstart` the shape's body becomes `KINEMATIC`, and every frame `grab.updateHeld` feeds the controller's world pose (`matrixWorld.decompose`) into `physics.updateHeld` — the body teleports onto the hand and gets the hand velocity (so it can push others). On `selectend` the body goes `DYNAMIC` again and receives the hand velocity → **throw** (capped by `MAX_THROW`). The same `select` events arrive from a hand pinch.
 - **Locomotion (`src/locomotion.js`).** Gamepads via `session.inputSources` by `handedness`. Left stick — move relative to gaze (horizontal). Right — turn (smooth by default, snap behind the `SMOOTH_TURN` flag), rotating around the world-space head position. Right **A** (`buttons[4]`) — jump (vertical velocity on the rig + gravity, ground-only). Right **B** (`buttons[5]`) — sprint (speed × `SPRINT_MULTIPLIER` while held).
-- **Effects (`src/effects.js`).** Left-hand powers, read in `effects.update(dt)` **before** `physics.step` so velocity changes integrate the same step. Left **X** spawns a shape ahead of gaze (recycles the oldest past `MAX_SHAPES`); left **Y** toggles a black hole that pulls + swirls dynamic bodies (`physics.eachDynamic`) and swallows them at the horizon (`physics.remove`); left **grip** is a radial force blast. Particle bursts come from one pooled `THREE.Points` (preallocated typed arrays); the black hole adds a core/halo/disk plus orbiting swirl particles.
+- **Cosmos (`src/cosmos.js`).** Gigantic far-away bodies — a colossal ringed gas giant, a sun, a supermassive black hole with a vast disk, a spiral galaxy, deep multi-layer stars — for sheer scale, plus hyperspace streak lines parented to the camera. Needs `CAMERA_FAR` large and very thin fog to be visible.
+- **Warp flight (`src/flight.js`).** Left grip with the Warp tool thrusts the rig along the gaze (full 3D); speed ramps to `WARP_MAX` and bleeds off on release. Above `WARP_FLOAT_Y` (or while warping) the player floats — `locomotion.update(dt, flying)` skips ground gravity.
+- **Tool menu (`src/menu.js`).** Left **X** toggles a floating panel placed ahead of gaze (oriented by copying the camera quaternion so it faces you). The right-controller ray + trigger picks a tool — `main`'s `onSelectStart` calls `menu.tryClick` before `grab`. The chosen tool is what **left grip** does.
+- **Tools (`src/effects.js`).** Driven by `main` from the menu (not raw buttons): `toggleBlackHole` (pull/swirl/swallow via `physics.eachDynamic`/`remove`), `supernova` (radial blast), `spawnStar` (drifting mini-sun), `spawnShape`. One pooled `THREE.Points` drives all bursts; `effects.update(dt)` runs the field + particles before `physics.step`.
 - **Hand tracking:** `XRHandModelFactory('spheres')` — joint primitives, no external assets. Enabled via `VRButton optionalFeatures`.
 
 ## Conventions
@@ -52,6 +58,9 @@ WebXR sandbox for Meta Quest 3. Three.js + WebXR + cannon-es. **ES modules, no b
 - **Changing a body's type needs `body.updateMassProperties()`** (DYNAMIC<->KINEMATIC), otherwise `invMass` isn't recomputed and the shape won't fall after a throw.
 - A held body is driven by teleport + velocity → it lags at most one frame of motion (imperceptible in VR).
 - `eachDynamic` callbacks must not add/remove bodies mid-iteration — `effects` collects swallow targets and removes them after the loop. Effects run before `physics.step` so spawns/removes/impulses land in the same frame.
+- The cosmos needs `CAMERA_FAR` (~12000) and near-zero fog; the old dense fog + far=100 would hide everything past ~60 m.
+- The menu faces the viewer by copying the XR camera quaternion (no `lookAt`); button planes are `DoubleSide` so the controller ray always registers a hit.
+- Left-hand controls: **X** = menu, **grip** = active tool. Right hand stays locomotion/jump/sprint/grab. Hand tracking has no buttons, so tools/menu are controller-only.
 
 ## Not done yet (see roadmap in PROJECT.md)
 Teleport arc, comfort vignette, spawning shapes with the grip button, haptics on grab/hover.

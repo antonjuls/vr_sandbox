@@ -36,7 +36,7 @@ export function createLocomotion(renderer, dolly) {
     dolly.quaternion.premultiply(_q);
   }
 
-  function update(dt) {
+  function update(dt, flying) {
     const { left, right } = getPads(renderer);
 
     // move relative to gaze direction (horizontal plane)
@@ -74,16 +74,21 @@ export function createLocomotion(renderer, dolly) {
       }
     }
 
-    // vertical channel: jump (right A) + gravity on the player rig
-    if (button(right, 4) && !aPrev && dolly.position.y <= 1e-4) {
-      vY = JUMP_SPEED; // jump only from the ground, on a fresh press
-    }
-    aPrev = button(right, 4);
-    vY -= GRAVITY * dt;
-    dolly.position.y += vY * dt;
-    if (dolly.position.y < 0) {
-      dolly.position.y = 0; // landed
+    // vertical channel: jump (right A) + gravity — only when grounded (skipped while flying)
+    if (flying) {
+      aPrev = button(right, 4);
       vY = 0;
+    } else {
+      if (button(right, 4) && !aPrev && dolly.position.y <= 1e-4) {
+        vY = JUMP_SPEED; // jump only from the ground, on a fresh press
+      }
+      aPrev = button(right, 4);
+      vY -= GRAVITY * dt;
+      dolly.position.y += vY * dt;
+      if (dolly.position.y < 0) {
+        dolly.position.y = 0; // landed
+        vY = 0;
+      }
     }
   }
 
